@@ -122,29 +122,37 @@
 - ✅ **Tailwind v4 へ移行**（v3 との不整合でビルドが壊れていたのを解消／コミット 00d5b4c）
 - ✅ **ランディングページを LinguaCoach 用に差し替え**（ダークモード・テック風）
 - ✅ **gitleaks 8.30 インストール + Husky pre-commit フック**（シークレット漏洩をコミット前にブロック・動作検証済み）
-- ✅ **Phase 1 UI 土台**（コミット fc815f4・バックエンド未接続）:
-  - 認証画面 `/login`・`/signup`・`/reset-password`（`(auth)` ルートグループ、送信はスタブ）
-  - ダッシュボード `/dashboard`（`(app)` ルートグループ、サイドバー＋ヘッダー＋骨組みカード）
+- ✅ **Phase 1 UI 土台**（コミット fc815f4）:
+  - 認証画面 `/login`・`/signup`・`/reset-password`（`(auth)` ルートグループ）
+  - ダッシュボード `/dashboard`（`(app)` ルートグループ、サイドバー＋ヘッダー＋カード）
   - 共通部品 `Logo` / `GridGlow`、shadcn の input/label/card を追加
+- ✅ **Phase 1 認証接続**（コミット 7ce7fe8・Supabase 連携済み）:
+  - `@supabase/ssr` でクライアント設定（browser / server / middleware）
+  - ログイン（signInWithPassword）・サインアップ（signUp＋確認メール）・
+    パスワード再設定（resetPasswordForEmail → `/auth/update-password`）・ログアウト
+  - 認証ミドルウェア: 未ログインで保護ルート→`/login`、ログイン済みで `/login`・`/signup`→`/dashboard`
+  - `/auth/callback` でメールリンクのコード交換
+- ✅ **Phase 1 DB**（コミット 397cb36）:
+  - `profiles`・`usage_log` テーブル作成（[supabase/migrations/0001](../supabase/migrations/0001_profiles_usage_log.sql)）
+  - RLS ポリシー、新規ユーザーで profiles 自動生成トリガー、updated_at トリガー
+  - ダッシュボードが RLS 経由で本人プロフィール（表示名/CEFRレベル/ストリーク）を表示
 
-### Phase 0 の残タスク（ユーザー側の作業）
-これらは外部アカウント作成のため、ユーザー本人の操作が必要:
-1. Anthropic アカウント・APIキー発行、予算上限$20設定
-2. Supabaseアカウント・プロジェクト作成（→ URL / anon / service_role キーを取得）
-3. Vercel アカウント・GitHubリポジトリ連携（自動デプロイ確認）
-4. 上記キーを `.env.local` に設定（`.env.example` をコピー）
+### Supabase プロジェクト情報
+- Project URL: `https://sshauvkhsdpwkgagcvfi.supabase.co`
+- キーは `.env.local`（Git 管理外）に設定済み
+- プロジェクト作成時設定: Data API ON / auto-expose new tables OFF / automatic RLS ON
+- テスト時は Authentication → Email の「Confirm email」を OFF にして検証（本番前に要再考）
+- マイグレーションは Supabase の SQL Editor に手貼りして実行（Supabase CLI は未導入）
 
-### 次のステップ（ROADMAP.md Phase 1: 認証 & 基本UI の残り）
-UI 土台は実装済み。次は Supabase キー取得後に「本物の認証」を接続する:
-- Supabase クライアント設定（`@supabase/ssr`）と `.env.local`
-- `/login`・`/signup`・`/reset-password` のスタブを実際の Supabase Auth 呼び出しに置換
-- 認証ミドルウェア（未ログイン時に `(app)` 配下を `/login` へリダイレクト）
-- DB マイグレーション: `profiles`・`usage_log` テーブル作成、全テーブル RLS 有効化
-- ヘッダーのストリーク/ユーザー表示を実データに接続
-- 完全な手順は [ROADMAP.md](ROADMAP.md) の Phase 1 を参照。
+### Phase 0/外部サービスの残タスク（ユーザー側）
+- Anthropic アカウント・APIキー発行（Phase 3 で使用）、予算上限$20設定
+- Vercel アカウント・GitHubリポジトリ連携（自動デプロイ・公開URL）
 
-> 各スタブには `TODO(Phase 1):` コメントを残してあるので、`TODO(Phase 1)` で検索すると
-> 接続すべき箇所が一覧できる。
+### 次のステップ（ROADMAP.md Phase 2: レベル判定テスト）
+- `level_tests` テーブル作成（マイグレーション 0002）
+- 選択式クイズ 20問のデータ準備（JSON or Claude API 生成）
+- テスト画面 `/onboarding` 実装、スコア集計・CEFR 判定ロジック
+- 結果を `profiles.cefr_level` に保存 → ダッシュボードに反映（接続済み）
 
 ### ⚠️ 新しいPCで開発する際の注意
 - `npm install` が必要（node_modules は Git 管理外）
