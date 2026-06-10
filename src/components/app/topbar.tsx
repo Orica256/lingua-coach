@@ -4,14 +4,19 @@ import { useRouter } from "next/navigation";
 import { Flame, LogOut } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { createClient } from "@/lib/supabase/client";
 
-export function Topbar() {
+export function Topbar({ email }: { email?: string | null }) {
   const router = useRouter();
 
-  function handleLogout() {
-    // TODO(Phase 1): Supabase Auth でサインアウトを実装する
+  async function handleLogout() {
+    const supabase = createClient();
+    await supabase.auth.signOut();
     router.push("/login");
+    router.refresh();
   }
+
+  const initial = email?.[0]?.toUpperCase() ?? "U";
 
   return (
     <header className="flex h-16 items-center justify-between gap-4 border-b border-border px-5">
@@ -25,10 +30,10 @@ export function Topbar() {
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-2">
           <span className="grid size-8 place-items-center rounded-full bg-muted text-sm font-medium">
-            U
+            {initial}
           </span>
-          <span className="hidden text-sm text-muted-foreground sm:inline">
-            ゲスト
+          <span className="hidden max-w-40 truncate text-sm text-muted-foreground sm:inline">
+            {email ?? "ゲスト"}
           </span>
         </div>
         <Button variant="ghost" size="sm" onClick={handleLogout}>

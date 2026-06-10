@@ -14,19 +14,28 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { createClient } from "@/lib/supabase/client";
 
 export default function ResetPasswordPage() {
   const [pending, setPending] = useState(false);
   const [sent, setSent] = useState(false);
 
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setPending(true);
-    // TODO(Phase 1): Supabase Auth でパスワードリセットメールを送信する
-    setTimeout(() => {
-      setPending(false);
-      setSent(true);
-    }, 600);
+
+    const form = new FormData(e.currentTarget);
+    const email = String(form.get("email"));
+
+    const supabase = createClient();
+    // 再設定リンクは callback 経由でパスワード更新ページへ誘導する
+    await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth/callback?next=/auth/update-password`,
+    });
+
+    // メール存在の有無は伝えない（アカウント列挙を防ぐ）
+    setSent(true);
+    setPending(false);
   }
 
   return (
@@ -40,11 +49,8 @@ export default function ResetPasswordPage() {
       <CardContent className="px-0">
         {sent ? (
           <p className="rounded-lg border border-border bg-muted/40 px-3 py-3 text-sm text-muted-foreground">
-            入力したメールアドレス宛に再設定リンクを送信しました（予定）。
-            <br />
-            <span className="text-xs">
-              ※ 認証バックエンド（Supabase）は Phase 1 で接続予定です。
-            </span>
+            入力したメールアドレスが登録済みであれば、再設定用のリンクを送信しました。
+            メールをご確認ください。
           </p>
         ) : (
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -52,6 +58,7 @@ export default function ResetPasswordPage() {
               <Label htmlFor="email">メールアドレス</Label>
               <Input
                 id="email"
+                name="email"
                 type="email"
                 placeholder="you@example.com"
                 autoComplete="email"
