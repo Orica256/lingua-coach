@@ -4,7 +4,7 @@
 > Claude Code に「このファイルを読んで文脈を把握して」と一声かければ続きから作業可能です。
 > **更新ルール**: 大きな決定や進捗があれば随時このファイルを更新してください。
 
-最終更新: 2026-06-11
+最終更新: 2026-06-11（Phase 1 完了 / Vercel デプロイ進行中）
 
 ---
 
@@ -148,6 +148,19 @@
 - Anthropic アカウント・APIキー発行（Phase 3 で使用）、予算上限$20設定
 - Vercel アカウント・GitHubリポジトリ連携（自動デプロイ・公開URL）
 
+### 🔧 進行中: Vercel デプロイ（中断中・ユーザー作業）
+スマホ確認のため Vercel へデプロイ中。ユーザーがブラウザで以下を実施する想定:
+1. Vercel に GitHub 連携でサインアップ（Hobby 無料）
+2. `lingua-coach` リポジトリを Import（Framework: Next.js 自動検出）
+3. **環境変数を3つ登録**（`.env.local` からコピー）:
+   - `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` / `SUPABASE_SERVICE_ROLE_KEY`
+4. Deploy（2〜3分）→ `https://〇〇.vercel.app` を取得
+5. **【未完・重要】** 取得した本番URLを Supabase に許可登録しないと本番で認証が動かない:
+   - Supabase → Authentication → URL Configuration
+   - Site URL を本番URLに、Redirect URLs に `https://〇〇.vercel.app/**` を追加
+   - （ローカル開発用に `http://localhost:3000/**` も残す）
+> 再開時: ユーザーに Vercel の本番URLを確認し、上記ステップ5（Supabase 側設定）を案内する。
+
 ### 次のステップ（ROADMAP.md Phase 2: レベル判定テスト）
 - `level_tests` テーブル作成（マイグレーション 0002）
 - 選択式クイズ 20問のデータ準備（JSON or Claude API 生成）
@@ -189,4 +202,5 @@ git pull
 - **Supabase + Vercel を選定**: 完全無料枠で運用可能なため
 - **Next.js App Router 採用**: SSR + APIルートが1プロジェクトで完結し、初心者にも管理しやすい
 - **ストリーク + バッジ採用**: ゲーミフィケーション要素は継続性のため必須
+- **コミットに Claude の署名を付けない（2026-06-11）**: `Co-Authored-By: Claude ...` 等の AI 署名はコミットメッセージ・PR本文に付けない方針（GitHub 上に表示されるのを避けるため）。過去分は `git filter-branch` で除去済み。
 - **Tailwind v4 を採用（2026-06-11）**: Phase 0 で導入された shadcn 4.x / base-ui / oklch / tw-animate-css は Tailwind v4 前提だが、初期化時に v3 が入っており不整合でビルドが壊れていた。v4 に統一して解消。今後 `npx shadcn add` で生成されるコードとも整合する。テーマ設定は JS config ではなく `globals.css` の `@theme inline` で管理する（v4 は CSS ファースト）。
