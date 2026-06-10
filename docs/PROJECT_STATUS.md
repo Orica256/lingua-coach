@@ -4,7 +4,7 @@
 > Claude Code に「このファイルを読んで文脈を把握して」と一声かければ続きから作業可能です。
 > **更新ルール**: 大きな決定や進捗があれば随時このファイルを更新してください。
 
-最終更新: 2026-06-08
+最終更新: 2026-06-11
 
 ---
 
@@ -118,18 +118,28 @@
 - ✅ 設計ドキュメント一式作成（README + docs/4点）
 - ✅ Excel 版ドキュメント出力
 - ✅ GitHub リポジトリ作成・初回push 完了
+- ✅ **Phase 0: Next.js 14 + shadcn/ui 初期化、セキュリティヘッダー、`.env.example`**（コミット 253fda0）
+- ✅ **Tailwind v4 へ移行**（v3 との不整合でビルドが壊れていたのを解消／コミット 00d5b4c）
+- ✅ **ランディングページを LinguaCoach 用に差し替え**（ダークモード・テック風）
+- ✅ **gitleaks 8.30 インストール + Husky pre-commit フック**（シークレット漏洩をコミット前にブロック・動作検証済み）
 
-### 次のステップ（ROADMAP.md Phase 0 から開始）
-1. Node.js 20.x LTS インストール（未確認）
-2. Anthropic アカウント・APIキー発行、予算上限$20設定
-3. Supabaseアカウント・プロジェクト作成
-4. Vercel アカウント・GitHubリポジトリ連携
-5. `npx create-next-app@latest` で Next.js プロジェクト初期化
-6. shadcn/ui 初期化
-7. `.env.local` セットアップ、`.env.example` 作成
-8. Husky + gitleaks 設定
+### Phase 0 の残タスク（ユーザー側の作業）
+これらは外部アカウント作成のため、ユーザー本人の操作が必要:
+1. Anthropic アカウント・APIキー発行、予算上限$20設定
+2. Supabaseアカウント・プロジェクト作成（→ URL / anon / service_role キーを取得）
+3. Vercel アカウント・GitHubリポジトリ連携（自動デプロイ確認）
+4. 上記キーを `.env.local` に設定（`.env.example` をコピー）
 
-完全な手順は [ROADMAP.md](ROADMAP.md) の Phase 0 を参照。
+### 次のステップ（ROADMAP.md Phase 1: 認証 & 基本UI）
+- Supabase キー取得後に着手可能。先に UI 土台（ログイン/サインアップ/ダッシュボードの見た目）は
+  キー無しでも実装可能。
+- 完全な手順は [ROADMAP.md](ROADMAP.md) の Phase 1 を参照。
+
+### ⚠️ 新しいPCで開発する際の注意
+- `npm install` が必要（node_modules は Git 管理外）
+- **gitleaks のインストールが別途必要**（pre-commit フックが利用）:
+  `winget install --id Gitleaks.Gitleaks` → ターミナル再起動で PATH 反映
+- 未インストールでもコミットは可能だが、その場合シークレット検査はスキップされる
 
 ---
 
@@ -160,3 +170,4 @@ git pull
 - **Supabase + Vercel を選定**: 完全無料枠で運用可能なため
 - **Next.js App Router 採用**: SSR + APIルートが1プロジェクトで完結し、初心者にも管理しやすい
 - **ストリーク + バッジ採用**: ゲーミフィケーション要素は継続性のため必須
+- **Tailwind v4 を採用（2026-06-11）**: Phase 0 で導入された shadcn 4.x / base-ui / oklch / tw-animate-css は Tailwind v4 前提だが、初期化時に v3 が入っており不整合でビルドが壊れていた。v4 に統一して解消。今後 `npx shadcn add` で生成されるコードとも整合する。テーマ設定は JS config ではなく `globals.css` の `@theme inline` で管理する（v4 は CSS ファースト）。
