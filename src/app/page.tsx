@@ -9,6 +9,8 @@ import {
   Volume2,
 } from "lucide-react";
 
+import { Logo } from "@/components/brand";
+import { GridGlow } from "@/components/decor";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -55,23 +57,11 @@ export default function Home() {
   return (
     <div className="relative flex min-h-screen flex-col overflow-hidden">
       {/* 背景のグロー演出 */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 -z-10 [background:radial-gradient(60%_50%_at_50%_0%,oklch(0.488_0.243_264.376/0.18),transparent_70%)]"
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 -z-10 opacity-[0.04] [background-image:linear-gradient(to_right,var(--foreground)_1px,transparent_1px),linear-gradient(to_bottom,var(--foreground)_1px,transparent_1px)] [background-size:48px_48px]"
-      />
+      <GridGlow />
 
       {/* ヘッダー */}
       <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-5">
-        <span className="flex items-center gap-2 font-semibold tracking-tight">
-          <span className="grid size-7 place-items-center rounded-md bg-primary text-primary-foreground font-mono text-sm">
-            L
-          </span>
-          LinguaCoach
-        </span>
+        <Logo size="md" />
         <nav className="flex items-center gap-2">
           <Link
             href="/login"
