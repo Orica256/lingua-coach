@@ -1,0 +1,14 @@
+# 改行コードの正規化（Windows/Mac/Linux 間の差異を吸収）
+* text=auto eol=lf
+
+# シェルスクリプト・Git フックは必ず LF（CRLF だと sh で実行に失敗するため）
+*.sh text eol=lf
+.husky/** text eol=lf
+
+# バイナリは変換しない
+*.woff binary
+*.woff2 binary
+*.ico binary
+*.png binary
+*.jpg binary
+*.xlsx binary

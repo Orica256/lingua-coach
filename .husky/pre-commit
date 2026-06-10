@@ -1,0 +1,19 @@
+#!/usr/bin/env sh
+
+# --- gitleaks: APIキー・シークレットの漏洩防止 ---
+# ステージされた変更のみをスキャンする。秘密情報を検出した場合はコミットを中止。
+if ! command -v gitleaks >/dev/null 2>&1; then
+  echo "⚠️  gitleaks が見つかりません。シークレット検査をスキップします。"
+  echo "   インストール（Windows）: winget install --id Gitleaks.Gitleaks"
+  echo "   インストール後はターミナルを再起動して PATH を反映してください。"
+else
+  echo "🔍 gitleaks: ステージされた変更を検査中..."
+  if ! gitleaks git --staged --no-banner --redact; then
+    echo ""
+    echo "❌ シークレットが検出されました。コミットを中止しました。"
+    echo "   APIキーやトークンが含まれていないか確認してください。"
+    echo "   （誤検知の場合は .gitleaks.toml の allowlist で除外できます）"
+    exit 1
+  fi
+  echo "✅ gitleaks: シークレットは検出されませんでした。"
+fi
