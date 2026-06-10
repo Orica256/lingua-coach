@@ -17,48 +17,86 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { createClient } from "@/lib/supabase/server";
 
-const stats = [
-  { label: "連続学習", value: "0", unit: "日", icon: Flame },
-  { label: "添削回数", value: "0", unit: "回", icon: CheckCircle2 },
-  { label: "学習時間", value: "0", unit: "分", icon: BarChart3 },
-];
+export default async function DashboardPage() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-export default function DashboardPage() {
+  // 自分のプロフィールを取得（RLS により本人の行のみ返る）
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("display_name, cefr_level, streak_days")
+    .eq("id", user!.id)
+    .single();
+
+  const greetingName =
+    profile?.display_name || user?.email?.split("@")[0] || "ゲスト";
+  const level = profile?.cefr_level ?? null;
+  const streak = profile?.streak_days ?? 0;
+
+  const stats = [
+    { label: "連続学習", value: String(streak), unit: "日", icon: Flame },
+    { label: "添削回数", value: "0", unit: "回", icon: CheckCircle2 },
+    { label: "学習時間", value: "0", unit: "分", icon: BarChart3 },
+  ];
+
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">ダッシュボード</h1>
+        <h1 className="text-2xl font-bold tracking-tight">
+          こんにちは、{greetingName} さん
+        </h1>
         <p className="text-sm text-muted-foreground">
           今日も英語の練習を始めましょう。
         </p>
       </div>
 
-      {/* レベル判定の案内（Phase 2 で実装） */}
-      <Card className="border-0 bg-gradient-to-r from-indigo-500/15 via-violet-500/10 to-transparent ring-1 ring-foreground/10">
-        <CardContent className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
-          <div className="flex items-start gap-3">
+      {/* レベル判定の案内 / 判定済みならレベル表示（Phase 2 で判定機能を実装） */}
+      {level ? (
+        <Card className="border-0 bg-gradient-to-r from-emerald-500/15 via-emerald-500/5 to-transparent ring-1 ring-foreground/10">
+          <CardContent className="flex items-center gap-3">
             <div className="grid size-10 shrink-0 place-items-center rounded-lg bg-background ring-1 ring-foreground/10">
               <GraduationCap className="size-5" />
             </div>
             <div>
-              <p className="font-medium">まずはレベル判定から</p>
+              <p className="font-medium">
+                あなたのレベル: <span className="font-mono">{level}</span>
+              </p>
               <p className="text-sm text-muted-foreground">
-                20問の選択式クイズであなたの CEFR レベルを判定します。
+                このレベルに合わせて学習を最適化します。
               </p>
             </div>
-          </div>
-          <Link
-            href="/onboarding"
-            className={cn(buttonVariants(), "h-9 shrink-0 px-4")}
-          >
-            判定を始める
-            <ArrowRight />
-          </Link>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      ) : (
+        <Card className="border-0 bg-gradient-to-r from-indigo-500/15 via-violet-500/10 to-transparent ring-1 ring-foreground/10">
+          <CardContent className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+            <div className="flex items-start gap-3">
+              <div className="grid size-10 shrink-0 place-items-center rounded-lg bg-background ring-1 ring-foreground/10">
+                <GraduationCap className="size-5" />
+              </div>
+              <div>
+                <p className="font-medium">まずはレベル判定から</p>
+                <p className="text-sm text-muted-foreground">
+                  20問の選択式クイズであなたの CEFR レベルを判定します。
+                </p>
+              </div>
+            </div>
+            <Link
+              href="/onboarding"
+              className={cn(buttonVariants(), "h-9 shrink-0 px-4")}
+            >
+              判定を始める
+              <ArrowRight />
+            </Link>
+          </CardContent>
+        </Card>
+      )}
 
-      {/* 統計サマリー（実データは Phase 4 で接続） */}
+      {/* 統計サマリー（添削回数・学習時間は Phase 4 で接続） */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         {stats.map(({ label, value, unit, icon: Icon }) => (
           <Card key={label}>
