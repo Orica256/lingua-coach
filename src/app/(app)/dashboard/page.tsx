@@ -2,6 +2,7 @@ import Link from "next/link";
 import {
   ArrowRight,
   BarChart3,
+  BookOpen,
   CheckCircle2,
   Flame,
   GraduationCap,
@@ -25,12 +26,18 @@ export default async function DashboardPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // 自分のプロフィールを取得（RLS により本人の行のみ返る）
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("display_name, cefr_level, streak_days")
-    .eq("id", user!.id)
-    .single();
+  // 自分のプロフィールと添削回数を取得（RLS により本人の行のみ返る）
+  const [{ data: profile }, { count: correctionCount }] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("display_name, cefr_level, streak_days")
+      .eq("id", user!.id)
+      .single(),
+    supabase
+      .from("corrections")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user!.id),
+  ]);
 
   const greetingName =
     profile?.display_name || user?.email?.split("@")[0] || "ゲスト";
@@ -39,7 +46,12 @@ export default async function DashboardPage() {
 
   const stats = [
     { label: "連続学習", value: String(streak), unit: "日", icon: Flame },
-    { label: "添削回数", value: "0", unit: "回", icon: CheckCircle2 },
+    {
+      label: "添削回数",
+      value: String(correctionCount ?? 0),
+      unit: "回",
+      icon: CheckCircle2,
+    },
     { label: "学習時間", value: "0", unit: "分", icon: BarChart3 },
   ];
 
@@ -123,16 +135,26 @@ export default async function DashboardPage() {
         <CardHeader>
           <CardTitle>学習を始める</CardTitle>
           <CardDescription>
-            シーンを選んで英文を入力すると、AI が添削します。
+            英会話の添削、または TOEIC の問題演習から選べます。
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="flex flex-col gap-3 sm:flex-row">
           <Link
             href="/learn/typing"
             className={cn(buttonVariants(), "h-10 px-5 text-base")}
           >
             <PenLine />
-            タイピング添削を始める
+            英会話添削を始める
+          </Link>
+          <Link
+            href="/learn/toeic"
+            className={cn(
+              buttonVariants({ variant: "outline" }),
+              "h-10 px-5 text-base"
+            )}
+          >
+            <BookOpen />
+            TOEIC 学習を始める
           </Link>
         </CardContent>
       </Card>

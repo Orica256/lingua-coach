@@ -19,7 +19,7 @@
 
 ---
 
-最終更新: 2026-06-11（Phase 2 完了 / Vercel デプロイ進行中）
+最終更新: 2026-06-11（Phase 3 添削実装済〔APIキー保留〕 / Phase 5 TOEIC Part 5 実装完了〔APIキー不要・要 migration 0004〕 / Vercel デプロイ進行中）
 
 ---
 
@@ -158,6 +158,23 @@
   - API `POST /api/level-test/submit`: 採点・`level_tests` 保存・`profiles.cefr_level` 更新
   - ダッシュボードの「判定を始める」ボタン → 完了後にレベルカードへ自動反映（接続済み）
   - ✅ ローカルでテスト通し・結果表示・ダッシュボード反映まで動作確認済み
+- ✅ **Phase 3: タイピング添削 実装完了**（型チェック・lint パス済み・※APIキー設定後に動作確認）:
+  - `corrections` テーブル作成（[supabase/migrations/0003](../supabase/migrations/0003_corrections.sql)）— RLS（本人のみ select）。**書き込みはサーバーの service_role が行う**ため insert ポリシーは無し。**※Supabase の SQL Editor で要実行（未実行）**
+  - `@anthropic-ai/sdk` 導入。Claude 添削ロジック [src/lib/anthropic.ts](../src/lib/anthropic.ts)：システムプロンプトで役割固定＋`<user_text>` デリミタでプロンプトインジェクション対策、JSON 構造化出力（修正文・自然さ score・カテゴリ別の指摘・改善例）をパース＆正規化
+  - service_role 用クライアント [src/lib/supabase/admin.ts](../src/lib/supabase/admin.ts)（RLS バイパス・サーバー専用）
+  - API `POST /api/correct`（[route](../src/app/api/correct/route.ts)）：認証→入力検証（最大2000字）→**レート制限（`usage_log` ベースで1日200回）**→Claude 呼び出し→`usage_log`＋`corrections` 保存。APIキー未設定時は 503 で分かりやすいメッセージ
+  - 画面 `/learn/typing`（[page](../src/app/(app)/learn/typing/page.tsx)）：シーン選択（プリセット6種＋自由入力）→英文入力→添削結果（修正文・自然さスコア・カテゴリ別指摘・改善例）。ダークテック風 UI
+  - プリセットシーン [src/data/typing-scenes.ts](../src/data/typing-scenes.ts)
+  - ダッシュボードの「添削回数」を `corrections` 件数に接続
+  - ⚠️ **動作確認の前提（残タスク）**: ① Supabase SQL Editor で `0003_corrections.sql` を実行 ② `.env.local` の `ANTHROPIC_API_KEY` に値を設定（Anthropic Console で発行・予算上限$20）→ 開発サーバー再起動
+- ✅ **Phase 5: TOEIC Part 5 演習（最小縦割り）実装完了**（型チェック・lint パス済み・**APIキー不要で動作**）:
+  - `toeic_attempts` テーブル作成（[supabase/migrations/0004](../supabase/migrations/0004_toeic_attempts.sql)）— RLS・本人 insert ポリシー付き。**※Supabase SQL Editor で要実行（未実行）**
+  - 自作シードバンク [src/data/toeic-part5-seed.ts](../src/data/toeic-part5-seed.ts) — **オリジナル Part 5 問題20問**（公式過去問の転載なし）。品詞/動詞の形/前置詞/接続詞/関係詞/代名詞/比較/数量/語彙、各問に日本語解説・目標スコア帯付き
+  - API `POST /api/toeic/submit`（[route](../src/app/api/toeic/submit/route.ts)）: サーバー側採点 → `toeic_attempts` 保存（クライアントの自己申告は不採用）
+  - 画面: [/learn/toeic](../src/app/(app)/learn/toeic/page.tsx)（パート選択ハブ・Part 6/7・Listening は「今後追加」表示）、[/learn/toeic/part5](../src/app/(app)/learn/toeic/part5/page.tsx)（10問ランダム出題・1問ごとに即時正誤＆解説・結果に正答率＆復習一覧）
+  - 導線追加: サイドバーに「TOEIC学習」、ダッシュボードの「学習を始める」に TOEIC ボタン。既存の「タイピング添削」表記は「英会話添削」に変更
+  - ⚠️ **動作確認の前提（残タスク）**: Supabase SQL Editor で `0004_toeic_attempts.sql` を実行（これだけで Part 5 演習はフル動作。APIキー不要）
+  - 次の拡張: Claude で Part 5 問題を追加生成しバンク化（`toeic_questions` テーブル＋ `/generate`・**APIキー登録後**）、Part 6/7・Listening、TOEIC スコア推定
 
 ### Supabase プロジェクト情報
 - Project URL: `https://sshauvkhsdpwkgagcvfi.supabase.co`
@@ -183,13 +200,13 @@
    - （ローカル開発用に `http://localhost:3000/**` も残す）
 > 再開時: ユーザーに Vercel の本番URLを確認し、上記ステップ5（Supabase 側設定）を案内する。
 
-### 次のステップ（ROADMAP.md Phase 3: タイピング添削）
-- Anthropic APIキー発行・`.env.local` に `ANTHROPIC_API_KEY` 追加
-- 添削画面 `/learn/typing` 実装:
-  - シーン選択（プリセット or 自由入力）
-  - 英文入力フォーム → Claude API で添削（文法ミス・自然な表現・改善例）
-  - 結果表示・`usage_log` 記録
-- レート制限（Upstash Redis or メモリキャッシュ）
+### 次のステップ
+1. **今すぐできる動作確認（APIキー不要）**: Supabase SQL Editor で [0004_toeic_attempts.sql](../supabase/migrations/0004_toeic_attempts.sql) を実行 → `/learn/toeic/part5` で10問演習 → 正答率・復習が表示され、履歴が `toeic_attempts` に保存されることを確認。
+2. **APIキー登録後にまとめて実施（課金が本当に必要になった段階）**:
+   - [0003_corrections.sql](../supabase/migrations/0003_corrections.sql) 実行 + `ANTHROPIC_API_KEY` 設定 → `/learn/typing`（Phase 3 タイピング添削）の動作確認
+   - TOEIC 問題の Claude 生成（`toeic_questions` バンク + `/api/toeic/generate`）を追加
+3. **TOEIC の横展開**: Part 5 の問題数追加、Part 6/7、Listening（Web Speech API TTS）、TOEIC スコア推定。
+4. **Phase 4: 学習履歴・傾向分析**: `/history`（`corrections` / `toeic_attempts` を一覧）、カテゴリ別の間違い傾向集計、ダッシュボードの「最近の学習」「学習時間」を実データに接続。
 
 ### ⚠️ 新しいPCで開発する際の注意
 - `npm install` が必要（node_modules は Git 管理外）
@@ -238,3 +255,11 @@ git pull
 - **コミットに Claude の署名を付けない（2026-06-11）**: `Co-Authored-By: Claude ...` 等の AI 署名はコミットメッセージ・PR本文に付けない方針（GitHub 上に表示されるのを避けるため）。過去分は `git filter-branch` で除去済み。
 - **変更・要望は必ず記録する（2026-06-11）**: コードの修正/追加やユーザーからの新しい要望が出た際は、その都度 `PROJECT_STATUS.md`（必要なら `CHAT_HISTORY.md`）に記録を残す運用とする。冒頭の「運用ルール」セクション参照。理由: 別PC・別チャットで再開しても文脈を失わないため。
 - **Tailwind v4 を採用（2026-06-11）**: Phase 0 で導入された shadcn 4.x / base-ui / oklch / tw-animate-css は Tailwind v4 前提だが、初期化時に v3 が入っており不整合でビルドが壊れていた。v4 に統一して解消。今後 `npx shadcn add` で生成されるコードとも整合する。テーマ設定は JS config ではなく `globals.css` の `@theme inline` で管理する（v4 は CSS ファースト）。
+- **TOEIC 学習機能の追加要望（2026-06-11）**: 本アプリを英会話添削だけでなく **TOEIC 学習にも使いたい**との要望。TOEIC 専用の学習機能（パート別の問題演習・スコア推定・傾向分析など）を今後のフェーズで追加する方針。
+  - **問題ソースの注意（重要）**: ユーザーは「Web 上の過去問の流用も許可する」と述べたが、**TOEIC の公式過去問・実試験問題は ETS の著作権で保護され、商標「TOEIC」も ETS の登録商標**であり、第三者が流用を許可できる対象ではない。Web からの転載は著作権侵害リスクがあるため採用しない。
+  - **決定した方針（2026-06-11）**: 上記 (a)(b) を**ハイブリッドで併用**する。すなわち **自作のオリジナル・シード問題バンク**（APIキー不要で即動作・品質が安定）を土台にしつつ、**Claude API で TOEIC 形式のオリジナル問題を追加生成**して同じ `toeic_questions` バンクに蓄積・再利用する。過去問の転載は不採用。
+  - **最初に着手するパート（2026-06-11）**: **Part 5（短文穴埋め・文法/語彙、4択）**。既存の4択クイズ基盤を最小構成で縦に通す。
+- **API（従量課金）の登録は本当に必要になるまで延期する（2026-06-11）**: Anthropic API キーの登録は契約＝従量課金の発生を伴うため、**機能が本当に必要になった段階で登録**する方針。それまでは **APIキー不要で動作する部分（自作シードバンク等）を優先して開発・動作確認**する。
+  - 影響: **Phase 3（タイピング添削）の Claude 連携部分の動作確認はキー登録時まで保留**（コードは実装済み・APIキー未設定時は 503 を返す）。
+  - **Phase 5（TOEIC Part 5）は自作シードバンクで先行実装**し、APIキー不要でテスト可能にする。Claude による問題追加生成（`/generate`）はキー登録後に有効化する。
+  - **アプリ方針との整合**: Part 5/6/7（Reading）はテキストベースで「選択式＋記入式のみ」の方針に完全に合致し、既存の4択クイズ基盤（level-quiz）を流用できる。Part 1〜4（Listening）は音声が必要で、本アプリは音声出力が Web Speech API のみのため、スクリプトの TTS 読み上げで擬似対応する想定（実試験音声との品質差に注意）→ 優先度は後段。

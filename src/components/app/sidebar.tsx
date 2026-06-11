@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  BookOpen,
   Clock,
   LayoutDashboard,
   PenLine,
@@ -15,7 +16,8 @@ import { cn } from "@/lib/utils";
 
 const navItems = [
   { href: "/dashboard", label: "ダッシュボード", icon: LayoutDashboard },
-  { href: "/learn/typing", label: "学習する", icon: PenLine },
+  { href: "/learn/typing", label: "英会話添削", icon: PenLine },
+  { href: "/learn/toeic", label: "TOEIC学習", icon: BookOpen },
   { href: "/history", label: "学習履歴", icon: Clock },
   { href: "/badges", label: "バッジ", icon: Trophy },
   { href: "/settings", label: "設定", icon: Settings },
