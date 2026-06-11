@@ -286,7 +286,7 @@ PROJECT_STATUS / CHAT_HISTORY を読んで文脈を把握し、Phase 3 を実装
 
 ## 13. 実装セッション（2026-06-11・続き / Phase 4: 学習履歴・傾向分析）
 
-ユーザーが `/learn/toeic/part5` の動作確認に成功した後、Phase 4 に着手。APIキー不要・新テーブル不要で出せる範囲を実装した。
+ユーザーが 0004 を Supabase に実行し `/learn/toeic/part5` の動作確認（10問演習・採点・保存）に成功した後、Phase 4 に着手。APIキー不要・新テーブル不要で出せる範囲を実装した。
 
 ### 実装内容（Phase 4 の一部）
 - **共通集計ロジック** `src/lib/activity.ts`:

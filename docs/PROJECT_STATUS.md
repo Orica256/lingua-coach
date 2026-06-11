@@ -19,7 +19,7 @@
 
 ---
 
-最終更新: 2026-06-11（Phase 3 添削実装済〔APIキー保留〕 / Phase 5 TOEIC Part 5 実装完了 / Phase 4 学習履歴・傾向分析（一部）実装完了〔APIキー不要〕 / Vercel デプロイ進行中）
+最終更新: 2026-06-11（Phase 3 添削実装済〔APIキー保留〕 / Phase 5 TOEIC Part 5 実装完了・動作確認済み / Phase 4 学習履歴・傾向分析（一部）実装完了〔APIキー不要〕 / Vercel デプロイ進行中）
 
 ---
 
@@ -167,13 +167,13 @@
   - プリセットシーン [src/data/typing-scenes.ts](../src/data/typing-scenes.ts)
   - ダッシュボードの「添削回数」を `corrections` 件数に接続
   - ⚠️ **動作確認の前提（残タスク）**: ① Supabase SQL Editor で `0003_corrections.sql` を実行 ② `.env.local` の `ANTHROPIC_API_KEY` に値を設定（Anthropic Console で発行・予算上限$20）→ 開発サーバー再起動
-- ✅ **Phase 5: TOEIC Part 5 演習（最小縦割り）実装完了**（型チェック・lint パス済み・**APIキー不要で動作**）:
-  - `toeic_attempts` テーブル作成（[supabase/migrations/0004](../supabase/migrations/0004_toeic_attempts.sql)）— RLS・本人 insert ポリシー付き。**※Supabase SQL Editor で要実行（未実行）**
+- ✅ **Phase 5: TOEIC Part 5 演習（最小縦割り）実装完了・動作確認済み**（型チェック・lint パス済み・**APIキー不要で動作**）:
+  - `toeic_attempts` テーブル作成（[supabase/migrations/0004](../supabase/migrations/0004_toeic_attempts.sql)）— RLS・本人 insert ポリシー付き。**Supabase SQL Editor で実行済み**（ユーザーが Part 5 演習を通しで動作確認・2026-06-11）
   - 自作シードバンク [src/data/toeic-part5-seed.ts](../src/data/toeic-part5-seed.ts) — **オリジナル Part 5 問題20問**（公式過去問の転載なし）。品詞/動詞の形/前置詞/接続詞/関係詞/代名詞/比較/数量/語彙、各問に日本語解説・目標スコア帯付き
   - API `POST /api/toeic/submit`（[route](../src/app/api/toeic/submit/route.ts)）: サーバー側採点 → `toeic_attempts` 保存（クライアントの自己申告は不採用）
   - 画面: [/learn/toeic](../src/app/(app)/learn/toeic/page.tsx)（パート選択ハブ・Part 6/7・Listening は「今後追加」表示）、[/learn/toeic/part5](../src/app/(app)/learn/toeic/part5/page.tsx)（10問ランダム出題・1問ごとに即時正誤＆解説・結果に正答率＆復習一覧）
   - 導線追加: サイドバーに「TOEIC学習」、ダッシュボードの「学習を始める」に TOEIC ボタン。既存の「タイピング添削」表記は「英会話添削」に変更
-  - ⚠️ **動作確認の前提（残タスク）**: Supabase SQL Editor で `0004_toeic_attempts.sql` を実行（これだけで Part 5 演習はフル動作。APIキー不要）
+  - ✅ 0004 実行済み・`/learn/toeic/part5` でユーザーが10問演習を通しで動作確認（2026-06-11）
   - 次の拡張: Claude で Part 5 問題を追加生成しバンク化（`toeic_questions` テーブル＋ `/generate`・**APIキー登録後**）、Part 6/7・Listening、TOEIC スコア推定
 - ✅ **Phase 4: 学習履歴・傾向分析（一部）実装完了**（型チェック・lint パス済み・**APIキー不要**・新テーブル不要）:
   - 共通集計ロジック [src/lib/activity.ts](../src/lib/activity.ts): `getRecentActivity`（toeic_attempts / corrections / level_tests を横断し時系列マージ。テーブル未作成でも data=null を空配列として扱い安全）、`getToeicCategoryStats`（toeic_attempts.answers ×シードで Part 5 カテゴリ別正答率を集計＝弱点可視化）、`formatActivityDate`
@@ -206,7 +206,7 @@
 > 再開時: ユーザーに Vercel の本番URLを確認し、上記ステップ5（Supabase 側設定）を案内する。
 
 ### 次のステップ
-1. **今すぐできる動作確認（APIキー不要）**: Supabase SQL Editor で [0004_toeic_attempts.sql](../supabase/migrations/0004_toeic_attempts.sql) を実行 → `/learn/toeic/part5` で10問演習 → 正答率・復習が表示され、履歴が `toeic_attempts` に保存されることを確認。
+1. ✅ **済: TOEIC Part 5 の動作確認**（0004 実行済み・10問演習を通しで確認・2026-06-11）。`/history` の TOEIC 傾向分析・タイムラインもこのデータで表示される。
 2. **APIキー登録後にまとめて実施（課金が本当に必要になった段階）**:
    - [0003_corrections.sql](../supabase/migrations/0003_corrections.sql) 実行 + `ANTHROPIC_API_KEY` 設定 → `/learn/typing`（Phase 3 タイピング添削）の動作確認
    - TOEIC 問題の Claude 生成（`toeic_questions` バンク + `/api/toeic/generate`）を追加
