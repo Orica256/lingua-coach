@@ -42,7 +42,7 @@
 - TypeScript 5.x
 - Next.js 14.x (App Router)
 - React 18.x
-- Tailwind CSS 3.x
+- Tailwind CSS 4.x（CSSファースト・`@theme inline` でテーマ管理）
 - shadcn/ui
 - Zustand（状態管理）
 - React Hook Form + Zod（フォーム検証）
@@ -136,13 +136,13 @@
   - `profiles`・`usage_log` テーブル作成（[supabase/migrations/0001](../supabase/migrations/0001_profiles_usage_log.sql)）
   - RLS ポリシー、新規ユーザーで profiles 自動生成トリガー、updated_at トリガー
   - ダッシュボードが RLS 経由で本人プロフィール（表示名/CEFRレベル/ストリーク）を表示
-- ✅ **Phase 2: レベル判定テスト**:
-  - `level_tests` テーブル作成（[supabase/migrations/0002](../supabase/migrations/0002_level_tests.sql)）— RLS・insert ポリシー付き
+- ✅ **Phase 2: レベル判定テスト**（コミット 58906ce・動作確認済み）:
+  - `level_tests` テーブル作成（[supabase/migrations/0002](../supabase/migrations/0002_level_tests.sql)）— RLS・insert ポリシー付き／**Supabase に実行済み**
   - 20問クイズデータ（[src/data/level-quiz.ts](../src/data/level-quiz.ts)）— A1×3・A2×3・B1×4・B2×4・C1×3・C2×3
   - `/onboarding` ページ: ようこそ画面 → クイズ（4択・1問ずつ・プログレスバー）→ 結果表示（CEFR レベル・スコア）
   - API `POST /api/level-test/submit`: 採点・`level_tests` 保存・`profiles.cefr_level` 更新
   - ダッシュボードの「判定を始める」ボタン → 完了後にレベルカードへ自動反映（接続済み）
-  - **⚠️ Supabase に 0002 マイグレーションを実行する必要あり**（次の「Supabase 手順」参照）
+  - ✅ ローカルでテスト通し・結果表示・ダッシュボード反映まで動作確認済み
 
 ### Supabase プロジェクト情報
 - Project URL: `https://sshauvkhsdpwkgagcvfi.supabase.co`
@@ -168,10 +168,6 @@
    - （ローカル開発用に `http://localhost:3000/**` も残す）
 > 再開時: ユーザーに Vercel の本番URLを確認し、上記ステップ5（Supabase 側設定）を案内する。
 
-### 🔧 Supabase: 0002 マイグレーション実行（ユーザー作業）
-Supabase ダッシュボード → SQL Editor → [0002_level_tests.sql](../supabase/migrations/0002_level_tests.sql) の内容を貼り付けて Run。
-これを実行しないと `/onboarding` でクイズ結果の保存が失敗する。
-
 ### 次のステップ（ROADMAP.md Phase 3: タイピング添削）
 - Anthropic APIキー発行・`.env.local` に `ANTHROPIC_API_KEY` 追加
 - 添削画面 `/learn/typing` 実装:
@@ -182,6 +178,15 @@ Supabase ダッシュボード → SQL Editor → [0002_level_tests.sql](../supa
 
 ### ⚠️ 新しいPCで開発する際の注意
 - `npm install` が必要（node_modules は Git 管理外）
+- **`.env.local` の再作成が必要**（Git 管理外なのでクローンには含まれない）。
+  これが無いと `Your project's URL and Key are required...` エラーで起動失敗する。
+  [.env.example](../.env.example) をコピーして以下を設定:
+  - `NEXT_PUBLIC_SUPABASE_URL=https://sshauvkhsdpwkgagcvfi.supabase.co`
+  - `NEXT_PUBLIC_SUPABASE_ANON_KEY` / `SUPABASE_SERVICE_ROLE_KEY`（Supabase → Settings → API から取得）
+  - `ANTHROPIC_API_KEY`（Phase 3 から必要）
+  - 保存後は開発サーバー再起動（環境変数は起動時のみ読込）
+- **git の user.name / user.email を設定**（未設定だと `unknown` 名でコミットされる）:
+  `git config --global user.name "Orica256"` / `git config --global user.email "..."`
 - **gitleaks のインストールが別途必要**（pre-commit フックが利用）:
   `winget install --id Gitleaks.Gitleaks` → ターミナル再起動で PATH 反映
 - 未インストールでもコミットは可能だが、その場合シークレット検査はスキップされる
