@@ -4,7 +4,7 @@
 > Claude Code に「このファイルを読んで文脈を把握して」と一声かければ続きから作業可能です。
 > **更新ルール**: 大きな決定や進捗があれば随時このファイルを更新してください。
 
-最終更新: 2026-06-11（Phase 1 完了 / Vercel デプロイ進行中）
+最終更新: 2026-06-11（Phase 2 完了 / Vercel デプロイ進行中）
 
 ---
 
@@ -136,6 +136,13 @@
   - `profiles`・`usage_log` テーブル作成（[supabase/migrations/0001](../supabase/migrations/0001_profiles_usage_log.sql)）
   - RLS ポリシー、新規ユーザーで profiles 自動生成トリガー、updated_at トリガー
   - ダッシュボードが RLS 経由で本人プロフィール（表示名/CEFRレベル/ストリーク）を表示
+- ✅ **Phase 2: レベル判定テスト**:
+  - `level_tests` テーブル作成（[supabase/migrations/0002](../supabase/migrations/0002_level_tests.sql)）— RLS・insert ポリシー付き
+  - 20問クイズデータ（[src/data/level-quiz.ts](../src/data/level-quiz.ts)）— A1×3・A2×3・B1×4・B2×4・C1×3・C2×3
+  - `/onboarding` ページ: ようこそ画面 → クイズ（4択・1問ずつ・プログレスバー）→ 結果表示（CEFR レベル・スコア）
+  - API `POST /api/level-test/submit`: 採点・`level_tests` 保存・`profiles.cefr_level` 更新
+  - ダッシュボードの「判定を始める」ボタン → 完了後にレベルカードへ自動反映（接続済み）
+  - **⚠️ Supabase に 0002 マイグレーションを実行する必要あり**（次の「Supabase 手順」参照）
 
 ### Supabase プロジェクト情報
 - Project URL: `https://sshauvkhsdpwkgagcvfi.supabase.co`
@@ -161,11 +168,17 @@
    - （ローカル開発用に `http://localhost:3000/**` も残す）
 > 再開時: ユーザーに Vercel の本番URLを確認し、上記ステップ5（Supabase 側設定）を案内する。
 
-### 次のステップ（ROADMAP.md Phase 2: レベル判定テスト）
-- `level_tests` テーブル作成（マイグレーション 0002）
-- 選択式クイズ 20問のデータ準備（JSON or Claude API 生成）
-- テスト画面 `/onboarding` 実装、スコア集計・CEFR 判定ロジック
-- 結果を `profiles.cefr_level` に保存 → ダッシュボードに反映（接続済み）
+### 🔧 Supabase: 0002 マイグレーション実行（ユーザー作業）
+Supabase ダッシュボード → SQL Editor → [0002_level_tests.sql](../supabase/migrations/0002_level_tests.sql) の内容を貼り付けて Run。
+これを実行しないと `/onboarding` でクイズ結果の保存が失敗する。
+
+### 次のステップ（ROADMAP.md Phase 3: タイピング添削）
+- Anthropic APIキー発行・`.env.local` に `ANTHROPIC_API_KEY` 追加
+- 添削画面 `/learn/typing` 実装:
+  - シーン選択（プリセット or 自由入力）
+  - 英文入力フォーム → Claude API で添削（文法ミス・自然な表現・改善例）
+  - 結果表示・`usage_log` 記録
+- レート制限（Upstash Redis or メモリキャッシュ）
 
 ### ⚠️ 新しいPCで開発する際の注意
 - `npm install` が必要（node_modules は Git 管理外）
