@@ -1,7 +1,6 @@
 import Link from "next/link";
 import {
   ArrowRight,
-  BarChart3,
   BookOpen,
   CheckCircle2,
   Flame,
@@ -19,6 +18,13 @@ import {
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/server";
+import { getRecentActivity, formatActivityDate } from "@/lib/activity";
+
+const TYPE_ICON = {
+  toeic: BookOpen,
+  correction: PenLine,
+  level_test: GraduationCap,
+} as const;
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -26,8 +32,13 @@ export default async function DashboardPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // 自分のプロフィールと添削回数を取得（RLS により本人の行のみ返る）
-  const [{ data: profile }, { count: correctionCount }] = await Promise.all([
+  // 自分のプロフィール・各種回数・直近の学習を取得（RLS により本人の行のみ）
+  const [
+    { data: profile },
+    { count: correctionCount },
+    { count: toeicCount },
+    recentActivity,
+  ] = await Promise.all([
     supabase
       .from("profiles")
       .select("display_name, cefr_level, streak_days")
@@ -37,6 +48,11 @@ export default async function DashboardPage() {
       .from("corrections")
       .select("id", { count: "exact", head: true })
       .eq("user_id", user!.id),
+    supabase
+      .from("toeic_attempts")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user!.id),
+    getRecentActivity(supabase, user!.id, 5),
   ]);
 
   const greetingName =
@@ -52,7 +68,12 @@ export default async function DashboardPage() {
       unit: "回",
       icon: CheckCircle2,
     },
-    { label: "学習時間", value: "0", unit: "分", icon: BarChart3 },
+    {
+      label: "TOEIC演習",
+      value: String(toeicCount ?? 0),
+      unit: "回",
+      icon: BookOpen,
+    },
   ];
 
   return (
@@ -159,21 +180,63 @@ export default async function DashboardPage() {
         </CardContent>
       </Card>
 
-      {/* 直近のアクティビティ（Phase 4 で実装） */}
+      {/* 直近のアクティビティ */}
       <Card>
         <CardHeader>
-          <CardTitle>最近の学習</CardTitle>
-          <CardDescription>学習履歴がここに表示されます。</CardDescription>
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <CardTitle>最近の学習</CardTitle>
+              <CardDescription>直近の演習・添削の記録です。</CardDescription>
+            </div>
+            {recentActivity.length > 0 && (
+              <Link
+                href="/history"
+                className="inline-flex shrink-0 items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+              >
+                すべて見る
+                <ArrowRight className="size-4" />
+              </Link>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed border-border py-10 text-center">
-            <p className="text-sm text-muted-foreground">
-              まだ学習履歴がありません。
-            </p>
-            <p className="text-xs text-muted-foreground">
-              最初の添削を行うとここに記録されます。
-            </p>
-          </div>
+          {recentActivity.length === 0 ? (
+            <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed border-border py-10 text-center">
+              <p className="text-sm text-muted-foreground">
+                まだ学習履歴がありません。
+              </p>
+              <p className="text-xs text-muted-foreground">
+                演習や添削を行うとここに記録されます。
+              </p>
+            </div>
+          ) : (
+            <ul className="flex flex-col">
+              {recentActivity.map((item) => {
+                const Icon = TYPE_ICON[item.type];
+                return (
+                  <li
+                    key={item.key}
+                    className="flex items-center gap-3 border-b border-border py-3 last:border-0"
+                  >
+                    <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-muted ring-1 ring-foreground/10">
+                      <Icon className="size-4" />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium">
+                        {item.title}
+                      </p>
+                      <p className="truncate text-xs text-muted-foreground">
+                        {item.detail}
+                      </p>
+                    </div>
+                    <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
+                      {formatActivityDate(item.createdAt)}
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
         </CardContent>
       </Card>
     </div>

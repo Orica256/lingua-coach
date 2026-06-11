@@ -19,7 +19,7 @@
 
 ---
 
-最終更新: 2026-06-11（Phase 3 添削実装済〔APIキー保留〕 / Phase 5 TOEIC Part 5 実装完了〔APIキー不要・要 migration 0004〕 / Vercel デプロイ進行中）
+最終更新: 2026-06-11（Phase 3 添削実装済〔APIキー保留〕 / Phase 5 TOEIC Part 5 実装完了 / Phase 4 学習履歴・傾向分析（一部）実装完了〔APIキー不要〕 / Vercel デプロイ進行中）
 
 ---
 
@@ -175,6 +175,11 @@
   - 導線追加: サイドバーに「TOEIC学習」、ダッシュボードの「学習を始める」に TOEIC ボタン。既存の「タイピング添削」表記は「英会話添削」に変更
   - ⚠️ **動作確認の前提（残タスク）**: Supabase SQL Editor で `0004_toeic_attempts.sql` を実行（これだけで Part 5 演習はフル動作。APIキー不要）
   - 次の拡張: Claude で Part 5 問題を追加生成しバンク化（`toeic_questions` テーブル＋ `/generate`・**APIキー登録後**）、Part 6/7・Listening、TOEIC スコア推定
+- ✅ **Phase 4: 学習履歴・傾向分析（一部）実装完了**（型チェック・lint パス済み・**APIキー不要**・新テーブル不要）:
+  - 共通集計ロジック [src/lib/activity.ts](../src/lib/activity.ts): `getRecentActivity`（toeic_attempts / corrections / level_tests を横断し時系列マージ。テーブル未作成でも data=null を空配列として扱い安全）、`getToeicCategoryStats`（toeic_attempts.answers ×シードで Part 5 カテゴリ別正答率を集計＝弱点可視化）、`formatActivityDate`
+  - 学習履歴ページ [/history](../src/app/(app)/history/page.tsx): TOEIC 傾向分析（カテゴリ別バー・正答率の低い順）＋ 学習履歴タイムライン（直近30件）。空状態あり
+  - ダッシュボード強化 [dashboard](../src/app/(app)/dashboard/page.tsx): 統計の「学習時間」を実データの「TOEIC演習」回数に差し替え、「最近の学習」を実データ（直近5件）＋「すべて見る」→ `/history` 導線に接続
+  - ⚠️ **未実装（後段・要APIキー or Cron）**: 復習モード `/learn/review`（過去の間違いから Claude で復習問題生成）、`daily_stats` 集計バッチ＋直近7日グラフ、`mistakes` 由来の英会話添削の傾向（corrections が貯まってから）
 
 ### Supabase プロジェクト情報
 - Project URL: `https://sshauvkhsdpwkgagcvfi.supabase.co`
@@ -206,7 +211,8 @@
    - [0003_corrections.sql](../supabase/migrations/0003_corrections.sql) 実行 + `ANTHROPIC_API_KEY` 設定 → `/learn/typing`（Phase 3 タイピング添削）の動作確認
    - TOEIC 問題の Claude 生成（`toeic_questions` バンク + `/api/toeic/generate`）を追加
 3. **TOEIC の横展開**: Part 5 の問題数追加、Part 6/7、Listening（Web Speech API TTS）、TOEIC スコア推定。
-4. **Phase 4: 学習履歴・傾向分析**: `/history`（`corrections` / `toeic_attempts` を一覧）、カテゴリ別の間違い傾向集計、ダッシュボードの「最近の学習」「学習時間」を実データに接続。
+4. **Phase 4 の残り**: 復習モード `/learn/review`（要APIキー）、`daily_stats` 集計＋直近7日グラフ（要 Cron）、英会話添削（corrections）の傾向分析（データが貯まってから）。
+   - ※`/history`・TOEIC傾向分析・ダッシュボードの最近の学習/TOEIC演習回数は実装済み。
 
 ### ⚠️ 新しいPCで開発する際の注意
 - `npm install` が必要（node_modules は Git 管理外）

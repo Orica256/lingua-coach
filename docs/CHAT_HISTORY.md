@@ -281,3 +281,24 @@ PROJECT_STATUS / CHAT_HISTORY を読んで文脈を把握し、Phase 3 を実装
 
 ### 次の予定
 - TOEIC 横展開（問題追加・Part 6/7・Listening・スコア推定）、または Phase 4（学習履歴・傾向分析）。
+
+---
+
+## 13. 実装セッション（2026-06-11・続き / Phase 4: 学習履歴・傾向分析）
+
+ユーザーが `/learn/toeic/part5` の動作確認に成功した後、Phase 4 に着手。APIキー不要・新テーブル不要で出せる範囲を実装した。
+
+### 実装内容（Phase 4 の一部）
+- **共通集計ロジック** `src/lib/activity.ts`:
+  - `getRecentActivity`: `toeic_attempts` / `corrections` / `level_tests` を横断取得し時系列マージ。supabase-js はテーブル未作成でも throw せず data=null を返すため、`?? []` で安全に空扱い（corrections は 0003 未実行でも問題なし）。
+  - `getToeicCategoryStats`: `toeic_attempts.answers`（[{id, selected}]）をシードと突き合わせ、Part 5 のカテゴリ別正答率を集計（弱点の可視化）。正答率が低い順に並べる。
+  - `formatActivityDate`: ja-JP の MM/DD HH:mm 整形。
+- **学習履歴ページ** `/history`: TOEIC 傾向分析（カテゴリ別バー）＋ 学習履歴タイムライン（直近30件）。空状態あり。
+- **ダッシュボード強化**: 統計の「学習時間」（未トラッキング）を実データの「TOEIC演習」回数に差し替え。「最近の学習」を実データ（直近5件）＋「すべて見る」→ `/history` 導線に接続。
+- 型チェック・lint パス。途中、Map の for-of イテレーションが tsconfig target に引っかかったため `Array.from(map.entries()).map(...)` に修正。
+
+### 残（後段）
+- 復習モード `/learn/review`（要APIキー）、`daily_stats` 集計＋直近7日グラフ（要 Cron）、英会話添削（corrections）の傾向分析（データ蓄積後）。
+
+### 次の予定
+- TOEIC 横展開、または Phase 4 残り（APIキー登録後）。
