@@ -180,29 +180,45 @@ lingua-coach/
 ## 🚀 セットアップ手順（開発初心者向け）
 
 ### 前提条件
-- Node.js 20.x 以上をインストール
-- Git をインストール
+- Git をインストール（Windows なら Git for Windows）
 - GitHubアカウント
-- Anthropicアカウント（Claude APIキー取得用）
 - Supabaseアカウント（無料）
-- Vercelアカウント（無料）
+- Anthropicアカウント（Claude APIキー取得用・**当面は不要**。従量課金が必要な機能を使うときだけ）
+- Vercelアカウント（無料・デプロイ時）
+- **Node.js は手動インストール不要**（下の `setup.ps1` が winget で自動導入。管理者権限不要）
 
-### 手順
-```bash
-# 1. リポジトリ作成
+### 手順（Windows / PowerShell — 推奨）
+新しい PC では clone 後にセットアップスクリプトを1回実行するだけで、Node.js（未導入なら winget の user スコープで自動インストール）・依存パッケージ・`.env.local` 雛形・gitleaks までまとめて用意します。**管理者権限は不要**です。
+
+```powershell
+# 1. クローン
 git clone <your-repo-url>
 cd lingua-coach
 
-# 2. 依存パッケージインストール
-npm install
+# 2. セットアップ（Node.js 自動導入 + npm install + .env.local 雛形 + gitleaks）
+./scripts/setup.ps1
+#  ↑ 実行ポリシーで止まる場合:
+#    powershell -ExecutionPolicy Bypass -File ./scripts/setup.ps1
 
-# 3. 環境変数設定
-cp .env.example .env.local
-# .env.local を編集して、各種APIキーを設定
+# 3. .env.local に Supabase キーを貼り付け
+#    Supabase Dashboard → Settings → API の anon / service_role を設定
 
-# 4. 開発サーバー起動
+# 4. 開発サーバー起動（setup を実行した同じシェルならそのまま動く）
 npm run dev
 # http://localhost:3000 でアクセス
+```
+
+> **winget で Node を入れた直後の注意**: 別の新規ターミナルで `npm` が「認識されません」となる場合、PATH 反映待ちです。**VS Code を完全に再起動**するか、`setup.ps1` を実行した同じシェルで続けてください（スクリプトは現在のシェルに PATH を反映します）。
+
+### 手順（手動 / macOS・Linux など）
+```bash
+# 1. Node.js 20.x 以上を各自インストール（nvm / fnm / 公式インストーラ等）
+# 2. 依存パッケージ
+npm install
+# 3. 環境変数
+cp .env.example .env.local   # 各種キーを設定
+# 4. 開発サーバー
+npm run dev
 ```
 
 ### .env.local に設定する項目

@@ -19,7 +19,7 @@
 
 ---
 
-最終更新: 2026-06-11（Phase 3 添削実装済〔APIキー保留〕 / Phase 5 TOEIC Part 5 実装完了・動作確認済み / Phase 4 学習履歴・傾向分析（一部）実装完了〔APIキー不要〕 / Vercel デプロイ進行中）
+最終更新: 2026-06-12（Phase 3 添削実装済〔APIキー保留〕 / Phase 5 TOEIC Part 5 実装完了・動作確認済み・**問題を20→40問に拡充** / Phase 4 学習履歴・傾向分析（一部）実装完了〔APIキー不要〕 / **新規PC向け setup.ps1 追加（Node 自動導入・管理者権限不要）** / Vercel デプロイ進行中）
 
 ---
 
@@ -169,7 +169,7 @@
   - ⚠️ **動作確認の前提（残タスク）**: ① Supabase SQL Editor で `0003_corrections.sql` を実行 ② `.env.local` の `ANTHROPIC_API_KEY` に値を設定（Anthropic Console で発行・予算上限$20）→ 開発サーバー再起動
 - ✅ **Phase 5: TOEIC Part 5 演習（最小縦割り）実装完了・動作確認済み**（型チェック・lint パス済み・**APIキー不要で動作**）:
   - `toeic_attempts` テーブル作成（[supabase/migrations/0004](../supabase/migrations/0004_toeic_attempts.sql)）— RLS・本人 insert ポリシー付き。**Supabase SQL Editor で実行済み**（ユーザーが Part 5 演習を通しで動作確認・2026-06-11）
-  - 自作シードバンク [src/data/toeic-part5-seed.ts](../src/data/toeic-part5-seed.ts) — **オリジナル Part 5 問題20問**（公式過去問の転載なし）。品詞/動詞の形/前置詞/接続詞/関係詞/代名詞/比較/数量/語彙、各問に日本語解説・目標スコア帯付き
+  - 自作シードバンク [src/data/toeic-part5-seed.ts](../src/data/toeic-part5-seed.ts) — **オリジナル Part 5 問題40問**（公式過去問の転載なし／2026-06-12 に 20→40 問へ拡充）。品詞/動詞の形/前置詞/接続詞/関係詞/代名詞/比較/数量/語彙の9カテゴリをほぼ均等（各4〜6問）に配置。各問に日本語解説・目標スコア帯付き。出題は全プールからランダム10問、採点・カテゴリ集計はすべて id 照合のため、新 id 追加だけで安全に拡張できる構造
   - API `POST /api/toeic/submit`（[route](../src/app/api/toeic/submit/route.ts)）: サーバー側採点 → `toeic_attempts` 保存（クライアントの自己申告は不採用）
   - 画面: [/learn/toeic](../src/app/(app)/learn/toeic/page.tsx)（パート選択ハブ・Part 6/7・Listening は「今後追加」表示）、[/learn/toeic/part5](../src/app/(app)/learn/toeic/part5/page.tsx)（10問ランダム出題・1問ごとに即時正誤＆解説・結果に正答率＆復習一覧）
   - 導線追加: サイドバーに「TOEIC学習」、ダッシュボードの「学習を始める」に TOEIC ボタン。既存の「タイピング添削」表記は「英会話添削」に変更
@@ -210,24 +210,28 @@
 2. **APIキー登録後にまとめて実施（課金が本当に必要になった段階）**:
    - [0003_corrections.sql](../supabase/migrations/0003_corrections.sql) 実行 + `ANTHROPIC_API_KEY` 設定 → `/learn/typing`（Phase 3 タイピング添削）の動作確認
    - TOEIC 問題の Claude 生成（`toeic_questions` バンク + `/api/toeic/generate`）を追加
-3. **TOEIC の横展開**: Part 5 の問題数追加、Part 6/7、Listening（Web Speech API TTS）、TOEIC スコア推定。
+3. **TOEIC の横展開**: ~~Part 5 の問題数追加~~（2026-06-12 に 40 問へ拡充済み・さらなる追加も可）、Part 6/7、Listening（Web Speech API TTS）、TOEIC スコア推定。
 4. **Phase 4 の残り**: 復習モード `/learn/review`（要APIキー）、`daily_stats` 集計＋直近7日グラフ（要 Cron）、英会話添削（corrections）の傾向分析（データが貯まってから）。
    - ※`/history`・TOEIC傾向分析・ダッシュボードの最近の学習/TOEIC演習回数は実装済み。
 
 ### ⚠️ 新しいPCで開発する際の注意
-- `npm install` が必要（node_modules は Git 管理外）
-- **`.env.local` の再作成が必要**（Git 管理外なのでクローンには含まれない）。
-  これが無いと `Your project's URL and Key are required...` エラーで起動失敗する。
-  [.env.example](../.env.example) をコピーして以下を設定:
+- **まず [scripts/setup.ps1](../scripts/setup.ps1) を1回実行する**（Windows / PowerShell・**管理者権限不要**）。
+  これ1つで以下を自動化する:
+  - **Node.js LTS を winget の user スコープで自動インストール**（未導入時のみ。バージョン管理ツール nvm/fnm は使わず Node を直接導入する方針＝2026-06-12 決定）
+  - 導入した Node の場所を**現在のシェルの PATH に反映**（VS Code 再起動なしで続行可能）
+  - `npm install`
+  - `.env.local` が無ければ [.env.example](../.env.example) から雛形を作成
+  - gitleaks が未導入なら winget の user スコープで導入（任意・失敗しても続行）
+  - 実行ポリシーで止まる場合: `powershell -ExecutionPolicy Bypass -File ./scripts/setup.ps1`
+- **`.env.local` は Git 管理外**なのでクローンには含まれない。無いと `Your project's URL and Key are required...` で起動失敗する。
+  setup.ps1 が雛形を作るので、以下を貼り付ける（保存後は dev サーバー再起動。環境変数は起動時のみ読込）:
   - `NEXT_PUBLIC_SUPABASE_URL=https://sshauvkhsdpwkgagcvfi.supabase.co`
   - `NEXT_PUBLIC_SUPABASE_ANON_KEY` / `SUPABASE_SERVICE_ROLE_KEY`（Supabase → Settings → API から取得）
-  - `ANTHROPIC_API_KEY`（Phase 3 から必要）
-  - 保存後は開発サーバー再起動（環境変数は起動時のみ読込）
+  - `ANTHROPIC_API_KEY`（**当面は空でOK**。従量課金が必要な機能を使うときだけ設定）
 - **git の user.name / user.email を設定**（未設定だと `unknown` 名でコミットされる）:
   `git config --global user.name "Orica256"` / `git config --global user.email "..."`
-- **gitleaks のインストールが別途必要**（pre-commit フックが利用）:
-  `winget install --id Gitleaks.Gitleaks` → ターミナル再起動で PATH 反映
-- 未インストールでもコミットは可能だが、その場合シークレット検査はスキップされる
+- **winget で Node を入れた直後の PATH 反映**: 別の新規ターミナルで `npm` が「認識されません」になる場合は、**VS Code を完全に再起動**するか、setup.ps1 を実行した同じシェルで続行する（winget の user スコープ PATH 更新は新規シェルの再起動が必要）。
+- **PowerShell スクリプトは UTF-8 BOM 付きで保存すること**（日本語 Windows の PowerShell 5.1 は BOM 無し UTF-8 を cp932 と誤読し、日本語コメントの一部バイトが `{}"` と衝突してパースエラーになる）。setup.ps1 は BOM 付きで保存済み。
 
 ---
 
@@ -265,6 +269,7 @@ git pull
   - **問題ソースの注意（重要）**: ユーザーは「Web 上の過去問の流用も許可する」と述べたが、**TOEIC の公式過去問・実試験問題は ETS の著作権で保護され、商標「TOEIC」も ETS の登録商標**であり、第三者が流用を許可できる対象ではない。Web からの転載は著作権侵害リスクがあるため採用しない。
   - **決定した方針（2026-06-11）**: 上記 (a)(b) を**ハイブリッドで併用**する。すなわち **自作のオリジナル・シード問題バンク**（APIキー不要で即動作・品質が安定）を土台にしつつ、**Claude API で TOEIC 形式のオリジナル問題を追加生成**して同じ `toeic_questions` バンクに蓄積・再利用する。過去問の転載は不採用。
   - **最初に着手するパート（2026-06-11）**: **Part 5（短文穴埋め・文法/語彙、4択）**。既存の4択クイズ基盤を最小構成で縦に通す。
+- **新規PCのセットアップを自動化（2026-06-12）**: 別PCで clone した直後に Node 未導入・`node_modules` 不在・`.env.local` 不在で起動できない問題が再発したため、[scripts/setup.ps1](../scripts/setup.ps1) を追加。**Node バージョン管理ツール（nvm/fnm）は使わず、winget の user スコープで Node.js LTS を直接導入する方式**をユーザーが選択（理由: nvm-windows はバージョン切替に管理者権限/開発者モードが必要で「管理者権限不要」の要件と相性が悪い。複数 Node バージョンの使い分け予定も無い）。スクリプトは Node 自動導入＋現在シェルへの PATH 反映＋`npm install`＋`.env.local` 雛形＋gitleaks 導入まで一括。管理者権限不要。
 - **API（従量課金）の登録は本当に必要になるまで延期する（2026-06-11）**: Anthropic API キーの登録は契約＝従量課金の発生を伴うため、**機能が本当に必要になった段階で登録**する方針。それまでは **APIキー不要で動作する部分（自作シードバンク等）を優先して開発・動作確認**する。
   - 影響: **Phase 3（タイピング添削）の Claude 連携部分の動作確認はキー登録時まで保留**（コードは実装済み・APIキー未設定時は 503 を返す）。
   - **Phase 5（TOEIC Part 5）は自作シードバンクで先行実装**し、APIキー不要でテスト可能にする。Claude による問題追加生成（`/generate`）はキー登録後に有効化する。

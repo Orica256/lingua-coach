@@ -250,6 +250,238 @@ export const TOEIC_PART5_SEED: ToeicQuestion[] = [
       "the recent ______ in と冠詞・形容詞に続く名詞が必要なので increase（増加）。increasing/increased は分詞・形容詞、increasingly は副詞。",
     targetScore: 600,
   },
+  {
+    id: 21,
+    part: 5,
+    category: "関係詞",
+    question:
+      "The factory, ______ was built in 1990, will be renovated next year.",
+    options: ["that", "which", "where", "what"],
+    answer: 1,
+    explanation:
+      "コンマ付きの非制限用法で先行詞は物（factory）なので which。非制限用法では that は使えず、where は後ろに完全文が必要、what は先行詞を取らない。",
+    targetScore: 730,
+  },
+  {
+    id: 22,
+    part: 5,
+    category: "関係詞",
+    question:
+      "We visited the office ______ the new equipment was installed.",
+    options: ["which", "that", "where", "what"],
+    answer: 2,
+    explanation:
+      "後ろが完全な文（the equipment was installed）で場所を表すので関係副詞 where。which/that は後ろに不完全文（主語や目的語の欠け）が続く。",
+    targetScore: 730,
+  },
+  {
+    id: 23,
+    part: 5,
+    category: "関係詞",
+    question:
+      "The applicants ______ we interviewed last week were highly qualified.",
+    options: ["who", "whom", "whose", "which"],
+    answer: 1,
+    explanation:
+      "後ろに we interviewed と主語＋動詞が続き、関係詞は interviewed の目的語にあたるので目的格 whom。先行詞は人なので which は不可。",
+    targetScore: 860,
+  },
+  {
+    id: 24,
+    part: 5,
+    category: "代名詞",
+    question: "The CEO prepared the entire presentation ______.",
+    options: ["he", "him", "his", "himself"],
+    answer: 3,
+    explanation:
+      "主語 The CEO と同一人物を指し『自分自身で』と強調するので再帰代名詞 himself。文の要素は既に揃っているため目的格 him は不要。",
+    targetScore: 600,
+  },
+  {
+    id: 25,
+    part: 5,
+    category: "代名詞",
+    question:
+      "Some employees prefer to work from home, while ______ prefer the office.",
+    options: ["another", "other", "others", "the other"],
+    answer: 2,
+    explanation:
+      "『ある人々は〜、他の人々は〜』は some ... others。others は単独で『他の人々』を表す複数代名詞。another は単数、other は後ろに名詞が必要。",
+    targetScore: 600,
+  },
+  {
+    id: 26,
+    part: 5,
+    category: "代名詞",
+    question:
+      "The two departments often support ______ during busy seasons.",
+    options: ["themselves", "each other", "every other", "the other"],
+    answer: 1,
+    explanation:
+      "2者間の『お互いを』は each other。themselves（再帰）だと『自分自身を支える』となり意味が合わない。",
+    targetScore: 600,
+  },
+  {
+    id: 27,
+    part: 5,
+    category: "比較",
+    question:
+      "The new model is ______ more efficient than the previous one.",
+    options: ["very", "far", "more", "too"],
+    answer: 1,
+    explanation:
+      "比較級 more efficient を強める語は far / much / even。very は原級（形容詞・副詞の元の形）を修飾し、比較級は強められない。",
+    targetScore: 600,
+  },
+  {
+    id: 28,
+    part: 5,
+    category: "比較",
+    question:
+      "Of all the candidates, she is the ______ qualified for the position.",
+    options: ["more", "most", "very", "much"],
+    answer: 1,
+    explanation:
+      "Of all 〜 と the に挟まれ、3者以上の中で最上を表すので最上級 most qualified。more は2者の比較。",
+    targetScore: 730,
+  },
+  {
+    id: 29,
+    part: 5,
+    category: "比較",
+    question: "The more you practice, the ______ your skills will become.",
+    options: ["good", "well", "better", "best"],
+    answer: 2,
+    explanation:
+      "The 比較級 …, the 比較級 … の構文。become の補語になる形容詞の比較級 better。best（最上級）は the+最上級でこの構文には合わない。",
+    targetScore: 860,
+  },
+  {
+    id: 30,
+    part: 5,
+    category: "数量",
+    question:
+      "______ employees attended the workshop than the organizers had expected.",
+    options: ["Less", "Fewer", "Much", "A little"],
+    answer: 1,
+    explanation:
+      "employees は可算名詞の複数形なので fewer（few の比較級）。less / a little / much は不可算名詞に用いる。",
+    targetScore: 600,
+  },
+  {
+    id: 31,
+    part: 5,
+    category: "数量",
+    question:
+      "There is ______ information available about the upcoming merger.",
+    options: ["few", "little", "many", "a number of"],
+    answer: 1,
+    explanation:
+      "information は不可算名詞なので little（ほとんどない）。few / many / a number of は可算名詞に用いる。",
+    targetScore: 600,
+  },
+  {
+    id: 32,
+    part: 5,
+    category: "数量",
+    question: "______ applicant must submit two professional references.",
+    options: ["All", "Every", "Most", "Both"],
+    answer: 1,
+    explanation:
+      "単数名詞 applicant と単数動詞 must submit に合うのは Every（+ 単数名詞）。All / Most は複数名詞、Both は2つのものに用いる。",
+    targetScore: 470,
+  },
+  {
+    id: 33,
+    part: 5,
+    category: "接続詞",
+    question:
+      "______ the report was thorough, it lacked a clear conclusion.",
+    options: ["Despite", "Although", "Because", "Therefore"],
+    answer: 1,
+    explanation:
+      "後ろが節（主語＋動詞）で『〜だが』という譲歩を表すので接続詞 Although。Despite は名詞句を取り、Therefore は副詞、Because は因果で意味が合わない。",
+    targetScore: 730,
+  },
+  {
+    id: 34,
+    part: 5,
+    category: "接続詞",
+    question: "Please review the contract carefully ______ you sign it.",
+    options: ["before", "during", "despite", "instead"],
+    answer: 0,
+    explanation:
+      "後ろが節 you sign it で『署名する前に』という時を表すので接続詞 before。during / despite は前置詞、instead は副詞で節を導けない。",
+    targetScore: 600,
+  },
+  {
+    id: 35,
+    part: 5,
+    category: "前置詞",
+    question: "The replacement parts will arrive ______ three business days.",
+    options: ["until", "within", "by", "since"],
+    answer: 1,
+    explanation:
+      "『3営業日以内に』と期間の範囲を表すので within。by は特定の期限（時点）、until は継続の終点、since は起点を表す。",
+    targetScore: 600,
+  },
+  {
+    id: 36,
+    part: 5,
+    category: "語彙",
+    question:
+      "The supervisor will ______ the new procedure at tomorrow's meeting.",
+    options: ["explain", "tell", "say", "talk"],
+    answer: 0,
+    explanation:
+      "explain + 物事（手順）で『〜を説明する』。tell は『人に伝える』、say は内容を直接目的語に取り、talk は talk about の形を取る。",
+    targetScore: 600,
+  },
+  {
+    id: 37,
+    part: 5,
+    category: "語彙",
+    question: "The company offers competitive salaries to ______ top talent.",
+    options: ["attract", "attend", "attach", "attempt"],
+    answer: 0,
+    explanation:
+      "『優秀な人材を引きつける』なので attract。attend は『出席する』、attach は『添付する』、attempt は『試みる』で意味が合わない。",
+    targetScore: 730,
+  },
+  {
+    id: 38,
+    part: 5,
+    category: "語彙",
+    question:
+      "All employees are required to ______ with the new safety regulations.",
+    options: ["comply", "apply", "reply", "supply"],
+    answer: 0,
+    explanation:
+      "comply with 〜 で『〜（規則）に従う』。apply / reply / supply は with をこの意味で取らない。",
+    targetScore: 730,
+  },
+  {
+    id: 39,
+    part: 5,
+    category: "品詞",
+    question: "The renovation was completed in a ______ manner.",
+    options: ["time", "timely", "times", "timed"],
+    answer: 1,
+    explanation:
+      "名詞 manner を修飾するのは形容詞 timely（時宜を得た）。-ly で終わるが副詞ではなく形容詞である点が狙い。time / times は名詞。",
+    targetScore: 600,
+  },
+  {
+    id: 40,
+    part: 5,
+    category: "動詞の形",
+    question: "If the client ______ the proposal, we will begin work next week.",
+    options: ["approve", "approves", "approved", "will approve"],
+    answer: 1,
+    explanation:
+      "時・条件を表す副詞節（if節）では未来のことも現在形で表す。主語 the client は三人称単数なので approves。will approve は使わない。",
+    targetScore: 730,
+  },
 ];
 
 /** 正答率（0–100）からざっくりした到達度コメントを返す（公式スコアではない）。 */
