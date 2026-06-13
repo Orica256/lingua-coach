@@ -211,6 +211,7 @@
   - API `/api/correct` は `@/lib/correction` の `correctText` / `isCorrectionConfigured` を使用（キー未設定時はプロバイダ非依存の 503 メッセージ）
   - [.env.example](../.env.example) に `LLM_PROVIDER` / `GEMINI_API_KEY` / `GEMINI_MODEL` を追記
   - ✅ **動作確認済み（2026-06-13・無料で稼働）**: `/learn/typing` で実際に Gemini 添削が返り（自然さスコア・総評・修正文）、`corrections`／`usage_log` への保存も確認。
+  - 🎯 **採点の辛口化（2026-06-13）**: 初期は採点が甘く、誤りだらけの英文に 90点が出ていた。共通プロンプト [src/lib/correction.ts](../src/lib/correction.ts) の `CORRECTION_SYSTEM_PROMPT` に **naturalness の明確な採点ルーブリック（誤りの個数→スコア帯）** を追加し、試験官スタンスで「励ましでスコアを上げない／誤りを1つ残らず指摘」と明示。実測で**同一英文が 90点→28点**に是正（実際の Gemini で検証済み）。
   - 🩹 **デバッグで判明した不具合と修正（重要）**: 最初 `/api/correct` が 500。原因は **service_role が usage_log/corrections に 403**（GRANT 不足）。Supabase 設定「Automatically expose new tables: OFF」のため、新規テーブルは明示 GRANT した role しかアクセスできず、既存マイグレーションは `authenticated` にしか GRANT しておらず **service_role への GRANT が抜けていた**（service_role は RLS は飛び越えるが GRANT 権限は別途必要）。→ [supabase/migrations/0005_grant_service_role.sql](../supabase/migrations/0005_grant_service_role.sql) で service_role に GRANT 付与し解消（**Supabase で実行済み**）。Gemini キー自体は正常（`AQ.Ab8...` は Google の新形式・有効）だった。
 
 ### Supabase プロジェクト情報
