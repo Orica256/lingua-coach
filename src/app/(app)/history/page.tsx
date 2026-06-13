@@ -47,11 +47,20 @@ export default async function HistoryPage() {
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">学習履歴</h1>
-        <p className="text-sm text-muted-foreground">
-          これまでの演習・添削の記録と、TOEIC の弱点傾向を確認できます。
-        </p>
+      <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">学習履歴</h1>
+          <p className="text-sm text-muted-foreground">
+            これまでの演習・添削の記録と、弱点の傾向を確認できます。
+          </p>
+        </div>
+        <Link
+          href="/learn/review"
+          className={cn(buttonVariants(), "h-9 shrink-0 px-4")}
+        >
+          弱点を復習する
+          <ArrowRight />
+        </Link>
       </div>
 
       {/* TOEIC 傾向分析 */}

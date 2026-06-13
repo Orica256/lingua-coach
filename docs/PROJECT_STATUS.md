@@ -35,7 +35,7 @@
 
 ---
 
-最終更新: 2026-06-13（**英会話添削を Gemini（無料枠・gemini-2.5-flash）に移行・動作確認済み（無料で稼働）** / service_role 403 問題を 0005 で修正 / レスポンシブデザイン化 実装完了 / Phase 5 TOEIC Part 5 動作確認済み・問題40問 / Phase 4 学習履歴・傾向分析（一部）実装完了 / 新規PC向け setup.ps1 / Vercel デプロイ進行中）
+最終更新: 2026-06-13（**Phase 4 完了（復習モード /learn/review まで実装・検証）** / 英会話添削を Gemini（無料枠・gemini-2.5-flash）に移行・稼働＋辛口採点 / service_role 403 を 0005 で修正 / レスポンシブ化完了 / Phase 5 TOEIC Part 5 動作確認済み・40問 / 新規PC向け setup.ps1 / Vercel デプロイ進行中）
 
 ---
 
@@ -196,7 +196,11 @@
   - 学習履歴ページ [/history](../src/app/(app)/history/page.tsx): TOEIC 傾向分析（カテゴリ別バー・正答率の低い順）＋ 学習履歴タイムライン（直近30件）。空状態あり
   - ダッシュボード強化 [dashboard](../src/app/(app)/dashboard/page.tsx): 統計の「学習時間」を実データの「TOEIC演習」回数に差し替え、「最近の学習」を実データ（直近5件）＋「すべて見る」→ `/history` 導線に接続
   - ✅ **追加実装（2026-06-13・Cron不要）**: ① **ダッシュボードに「直近7日間の学習」棒グラフ**（`getDailyActivity`＝toeic_attempts＋corrections を生データから日次集計。daily_stats バッチ/Cron は使わず render 時集計）② **`/history` に「英会話添削の傾向」**（`getCorrectionMistakeStats`＝corrections.feedback のカテゴリを横断集計しカテゴリ別件数バー）。いずれも [src/lib/activity.ts](../src/lib/activity.ts) に集計関数を追加。
-  - ⚠️ **Phase 4 の残（未実装）**: 復習モード `/learn/review`（過去の間違いから Gemini で復習問題を生成）。`daily_stats` 事前集計バッチ（Cron）は当面不要（render 時集計で代替済み）。
+  - ✅ **復習モード `/learn/review` 実装・実地検証済み（2026-06-13）＝Phase 4 完了**: 弱点（TOEIC 低正答率カテゴリ＋添削で多い誤りカテゴリ＋実際の誤り例）を集め、**Gemini で復習用4択問題を5問生成**して出題（1問ごと即時正誤＆解説→結果）。
+    - 生成ロジック [src/lib/review.ts](../src/lib/review.ts)（responseSchema で4択配列を強制・不正問題は捨てる正規化）、API [/api/review/generate](../src/app/api/review/generate/route.ts)（認証→usage_log 日次レート制限→弱点収集→生成→usage_log 記録）、画面 [/learn/review](../src/app/(app)/learn/review/page.tsx)。
+    - 履歴が少なくても基礎の良問を出す（弱点情報が無ければ「基礎文法全般」で生成）。実地検証で4択・正解index・弱点反映を確認。
+    - 導線: サイドバー/モバイルナビに「弱点復習」、`/history` ヘッダーに「弱点を復習する」ボタン。
+    - `daily_stats` 事前集計バッチ（Cron）は render 時集計で代替済みのため不要。**Phase 4 は完了**。
 - ✅ **レスポンシブデザイン化 実装完了**（型チェック・lint パス済み・2026-06-13）:
   - **最大の問題＝アプリ内サイドバーが `hidden md:flex` でモバイルではナビ消失**だった点を解消。モバイル用ドロワーナビ [src/components/app/mobile-nav.tsx](../src/components/app/mobile-nav.tsx) を追加（ハンバーガー→左ドロワー・背景オーバーレイ・ルート遷移で自動クローズ・背景スクロールロック）
   - ナビ項目を [src/components/app/nav-items.ts](../src/components/app/nav-items.ts) に共通化し、サイドバー（PC）とドロワー（モバイル）で共有
@@ -248,8 +252,7 @@
    - [0003_corrections.sql](../supabase/migrations/0003_corrections.sql) 実行 + `ANTHROPIC_API_KEY` 設定 → `/learn/typing`（Phase 3 タイピング添削）の動作確認
    - TOEIC 問題の Claude 生成（`toeic_questions` バンク + `/api/toeic/generate`）を追加
 3. **TOEIC の横展開**: ~~Part 5 の問題数追加~~（2026-06-12 に 40 問へ拡充済み・さらなる追加も可）、Part 6/7、Listening（Web Speech API TTS）、TOEIC スコア推定。
-4. **Phase 4 の残り**: 復習モード `/learn/review`（過去の間違いから Gemini で復習問題を生成）のみ。
-   - ※直近7日グラフ・英会話添削の傾向・TOEIC傾向・履歴/最近の学習は実装済み（Cron不要）。
+4. ✅ **Phase 4 完了**（復習モード `/learn/review` まで実装・検証済み）。次は TOEIC の Gemini 自動生成（`toeic_questions` バンク）、Part 6/7、ゲーミフィケーション（バッジ/ストリーク実データ）、Vercel 本番設定など。
 
 ### ⚠️ 新しいPCで開発する際の注意
 - **まず [scripts/setup.ps1](../scripts/setup.ps1) を1回実行する**（Windows / PowerShell・**管理者権限不要**）。

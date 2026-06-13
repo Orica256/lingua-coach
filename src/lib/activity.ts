@@ -215,6 +215,37 @@ export async function getCorrectionMistakeStats(
     .sort((a, b) => b.count - a.count);
 }
 
+/**
+ * 直近の英会話添削から、実際の誤り例（誤→正）を最大 limit 件取り出す。
+ * 復習問題の生成プロンプトに「学習者の実際の落とし穴」として渡す用途。
+ */
+export async function getRecentMistakeExamples(
+  supabase: SupabaseServerClient,
+  userId: string,
+  limit = 6
+): Promise<{ original: string; corrected: string }[]> {
+  const { data } = await supabase
+    .from("corrections")
+    .select("feedback, created_at")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(20);
+
+  const out: { original: string; corrected: string }[] = [];
+  for (const row of data ?? []) {
+    const fb = row.feedback as {
+      corrections?: { original?: string; corrected?: string }[];
+    } | null;
+    for (const c of fb?.corrections ?? []) {
+      if (c.original && c.corrected) {
+        out.push({ original: String(c.original), corrected: String(c.corrected) });
+        if (out.length >= limit) return out;
+      }
+    }
+  }
+  return out;
+}
+
 /** ISO 日時を「MM/DD HH:mm」形式（日本語ロケール）に整形する。 */
 export function formatActivityDate(iso: string): string {
   return new Date(iso).toLocaleString("ja-JP", {

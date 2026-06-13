@@ -438,3 +438,26 @@ PROJECT_STATUS / CHAT_HISTORY を読んで文脈を把握し、Phase 3 を実装
 
 ### 次の予定
 - 復習モード `/learn/review` の実装（Gemini・無料枠）。または本実装のコミット&push。
+
+---
+
+## 20. 復習モード /learn/review 実装 → Phase 4 完了（2026-06-13）
+
+ユーザー「復習モードお願いします」。Phase 4 最後の項目を実装。
+
+### 実装内容
+- `src/lib/activity.ts` に `getRecentMistakeExamples`（corrections.feedback から実際の誤→正ペアを最大6件抽出）を追加。
+- `src/lib/review.ts`: `generateReviewQuestions({ weakCategories, mistakeExamples, count })`。Gemini（gemini-2.5-flash）+ responseSchema で**4択問題の配列**を生成。options が4個でない/answer が0〜3でない問題は正規化で捨てる。temperature 0.7。
+- API `POST /api/review/generate`: 認証 → GEMINI_API_KEY 必須チェック → usage_log 日次レート制限（添削と共有の200/日）→ 弱点収集（getToeicCategoryStats の accuracy<80＋getCorrectionMistakeStats 上位3＋誤り例）→ 生成 → usage_log 記録。
+- 画面 `/learn/review`（intro→loading→quiz→result）。1問ごと即時正誤＆解説、結果に正答率、「新しい問題で復習」で再生成。履歴が無くても「基礎文法全般」で出題。
+- 導線: nav-items に「弱点復習」（Repeat アイコン）、/history ヘッダーに「弱点を復習する」CTA。
+
+### 検証
+- 一時スクリプトで実際に Gemini に弱点（時制/冠詞/主述一致）＋誤り例を渡して生成 → 3問すべて4択・answer 妥当・弱点反映（an / plans / produces）を確認。スクリプトは削除。
+- 型・lint パス。
+
+### Phase 4 完了
+- 学習履歴・TOEIC傾向・添削傾向・7日グラフ・ダッシュボード強化・復習モードまで実装。daily_stats バッチ（Cron）は render 時集計で代替済みのため不要。
+
+### 次の予定（候補）
+- TOEIC 問題の Gemini 自動生成（toeic_questions バンク）、Part 6/7、ゲーミフィケーション（バッジ/ストリーク実データ）、Vercel 本番設定。
