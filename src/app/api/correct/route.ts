@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { correctText, isCorrectionConfigured } from "@/lib/correction";
+import { touchStreak } from "@/lib/streak";
 
 /** 1ユーザーあたりの1日のリクエスト上限（API濫用・コスト暴走の防止）。 */
 const DAILY_LIMIT = 200;
@@ -140,6 +141,11 @@ export async function POST(request: Request) {
   } catch (e) {
     console.error("DB 保存中に例外:", e);
   }
+
+  // ストリーク更新（非致命的）
+  await touchStreak(user.id).catch((e) =>
+    console.error("touchStreak failed:", e)
+  );
 
   return NextResponse.json(result);
 }

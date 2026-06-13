@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";
 import { TOEIC_PART5_SEED } from "@/data/toeic-part5-seed";
+import { touchStreak } from "@/lib/streak";
 
 /** id → 正解インデックスの早見表（サーバー側採点用） */
 const ANSWER_BY_ID = new Map(
@@ -72,6 +73,11 @@ export async function POST(request: Request) {
   if (insertError) {
     return NextResponse.json({ error: insertError.message }, { status: 500 });
   }
+
+  // ストリーク更新（非致命的）
+  await touchStreak(user.id).catch((e) =>
+    console.error("touchStreak failed:", e)
+  );
 
   return NextResponse.json({ total, correct });
 }

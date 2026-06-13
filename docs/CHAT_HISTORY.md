@@ -461,3 +461,28 @@ PROJECT_STATUS / CHAT_HISTORY を読んで文脈を把握し、Phase 3 を実装
 
 ### 次の予定（候補）
 - TOEIC 問題の Gemini 自動生成（toeic_questions バンク）、Part 6/7、ゲーミフィケーション（バッジ/ストリーク実データ）、Vercel 本番設定。
+
+---
+
+## 21. ストリーク実データ化 ＋ 設定ページ（2026-06-13）
+
+ユーザーが「今できる作業一覧」を要求 → 一覧提示 → 「1（ストリーク実データ化）と2（/settings）」を選択し実装。
+
+### ストリーク実データ化
+- 従来 topbar は常に「0日連続」（streak_days を更新するロジックが無かった）。
+- `src/lib/streak.ts`:
+  - `touchStreak(userId)`: profiles の streak_days/last_active_at を更新。**同日二重カウント無し／前日学習なら+1／間が空けば1にリセット**。日付判定は `toLocaleDateString("en-CA", { timeZone: "Asia/Tokyo" })` で**JST基準**にしサーバーTZ非依存（Vercel=UTC でもズレない）。書き込みは service_role。
+  - `currentStreak(streakDays, lastActiveAt)`: 表示用。最終学習が今日/昨日でなければ「途切れ」として0を返す（streak_days はアクティビティ時しか更新されないため）。
+- 呼び出し: `/api/correct`・`/api/toeic/submit` の成功時に `touchStreak`（非致命的・catch）。
+- 表示: `(app)/layout.tsx` で profile を読み currentStreak を topbar に渡す。dashboard も currentStreak に変更。
+
+### 設定ページ /settings
+- nav にあって404だったページを実装。`src/app/(app)/settings/page.tsx`（server で profile 取得）＋ `src/components/app/settings-form.tsx`（client）。
+- 機能: ①表示名の編集・保存（ブラウザの supabase クライアントで profiles を RLS 経由 update。profiles は authenticated に update 付与済み）②英語レベル表示＋「再判定する」→/onboarding ③ログアウト。
+- 型・lint パス。
+
+### メモ
+- アカウント削除は service_role の admin.auth.deleteUser が必要＆破壊的なので今回は見送り（必要なら別途）。
+
+### 次の予定（候補）
+- TOEIC の Gemini 自動生成、Part 6/7・スコア推定、バッジ獲得システム（badges テーブル＋/badges）、音声読み上げ、Vercel 本番設定。

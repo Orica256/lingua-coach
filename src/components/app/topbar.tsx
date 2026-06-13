@@ -6,8 +6,15 @@ import { Flame, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MobileNav } from "@/components/app/mobile-nav";
 import { createClient } from "@/lib/supabase/client";
+import { cn } from "@/lib/utils";
 
-export function Topbar({ email }: { email?: string | null }) {
+export function Topbar({
+  email,
+  streak = 0,
+}: {
+  email?: string | null;
+  streak?: number;
+}) {
   const router = useRouter();
 
   async function handleLogout() {
@@ -24,10 +31,15 @@ export function Topbar({ email }: { email?: string | null }) {
       <div className="flex items-center gap-2">
         {/* モバイル用メニュー（PC では非表示） */}
         <MobileNav />
-        {/* ストリーク表示（Phase 5 で実データに接続） */}
+        {/* ストリーク表示（実データ） */}
         <div className="flex items-center gap-1.5 rounded-full border border-border bg-card/40 px-3 py-1 text-sm">
-          <Flame className="size-4 text-orange-400" />
-          <span className="font-medium">0</span>
+          <Flame
+            className={cn(
+              "size-4",
+              streak > 0 ? "text-orange-400" : "text-muted-foreground"
+            )}
+          />
+          <span className="font-medium tabular-nums">{streak}</span>
           <span className="text-muted-foreground">日連続</span>
         </div>
       </div>

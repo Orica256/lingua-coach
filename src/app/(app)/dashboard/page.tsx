@@ -23,6 +23,7 @@ import {
   getDailyActivity,
   formatActivityDate,
 } from "@/lib/activity";
+import { currentStreak } from "@/lib/streak";
 
 const TYPE_ICON = {
   toeic: BookOpen,
@@ -46,7 +47,7 @@ export default async function DashboardPage() {
   ] = await Promise.all([
     supabase
       .from("profiles")
-      .select("display_name, cefr_level, streak_days")
+      .select("display_name, cefr_level, streak_days, last_active_at")
       .eq("id", user!.id)
       .single(),
     supabase
@@ -68,7 +69,7 @@ export default async function DashboardPage() {
   const greetingName =
     profile?.display_name || user?.email?.split("@")[0] || "ゲスト";
   const level = profile?.cefr_level ?? null;
-  const streak = profile?.streak_days ?? 0;
+  const streak = currentStreak(profile?.streak_days, profile?.last_active_at);
 
   const stats = [
     { label: "連続学習", value: String(streak), unit: "日", icon: Flame },

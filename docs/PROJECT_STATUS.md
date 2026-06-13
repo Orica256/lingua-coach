@@ -201,6 +201,8 @@
     - 履歴が少なくても基礎の良問を出す（弱点情報が無ければ「基礎文法全般」で生成）。実地検証で4択・正解index・弱点反映を確認。
     - 導線: サイドバー/モバイルナビに「弱点復習」、`/history` ヘッダーに「弱点を復習する」ボタン。
     - `daily_stats` 事前集計バッチ（Cron）は render 時集計で代替済みのため不要。**Phase 4 は完了**。
+- ✅ **ストリーク（連続学習日数）実データ化（2026-06-13）**: 従来は topbar が常に「0日連続」だった。[src/lib/streak.ts](../src/lib/streak.ts) を追加し、`touchStreak`（学習時に streak_days/last_active_at を更新。同日二重カウント無し・前日学習なら+1・間が空けば1にリセット・**JST基準の日付判定**でサーバーTZ非依存）を `/api/correct`・`/api/toeic/submit` 成功時に呼ぶ。表示は `currentStreak`（最終学習が今日/昨日でなければ「途切れ」として0表示）を topbar・ダッシュボードで使用。profiles 書き込みは service_role（0005 で GRANT 済み）。
+- ✅ **設定ページ `/settings` 実装（2026-06-13）**: nav にあって404だったページを実装。[/settings](../src/app/(app)/settings/page.tsx) ＋ クライアントフォーム [src/components/app/settings-form.tsx](../src/components/app/settings-form.tsx)。① 表示名の編集・保存（ブラウザの supabase クライアントで profiles を RLS 経由 update）② 英語レベル表示＋「再判定する」→ `/onboarding` ③ ログアウト。メールは読み取り表示。
 - ✅ **レスポンシブデザイン化 実装完了**（型チェック・lint パス済み・2026-06-13）:
   - **最大の問題＝アプリ内サイドバーが `hidden md:flex` でモバイルではナビ消失**だった点を解消。モバイル用ドロワーナビ [src/components/app/mobile-nav.tsx](../src/components/app/mobile-nav.tsx) を追加（ハンバーガー→左ドロワー・背景オーバーレイ・ルート遷移で自動クローズ・背景スクロールロック）
   - ナビ項目を [src/components/app/nav-items.ts](../src/components/app/nav-items.ts) に共通化し、サイドバー（PC）とドロワー（モバイル）で共有
@@ -252,7 +254,7 @@
    - [0003_corrections.sql](../supabase/migrations/0003_corrections.sql) 実行 + `ANTHROPIC_API_KEY` 設定 → `/learn/typing`（Phase 3 タイピング添削）の動作確認
    - TOEIC 問題の Claude 生成（`toeic_questions` バンク + `/api/toeic/generate`）を追加
 3. **TOEIC の横展開**: ~~Part 5 の問題数追加~~（2026-06-12 に 40 問へ拡充済み・さらなる追加も可）、Part 6/7、Listening（Web Speech API TTS）、TOEIC スコア推定。
-4. ✅ **Phase 4 完了**（復習モード `/learn/review` まで実装・検証済み）。次は TOEIC の Gemini 自動生成（`toeic_questions` バンク）、Part 6/7、ゲーミフィケーション（バッジ/ストリーク実データ）、Vercel 本番設定など。
+4. ✅ **Phase 4 完了**＋ストリーク実データ化・`/settings` 実装済み。次は: TOEIC の Gemini 自動生成（`toeic_questions` バンク）、Part 6/7・スコア推定、**バッジ獲得システム**（`badges` テーブル＋条件判定／`/badges` ページ）、音声読み上げ（Web Speech API）、Vercel 本番設定。
 
 ### ⚠️ 新しいPCで開発する際の注意
 - **まず [scripts/setup.ps1](../scripts/setup.ps1) を1回実行する**（Windows / PowerShell・**管理者権限不要**）。
