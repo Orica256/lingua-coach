@@ -517,3 +517,22 @@ PROJECT_STATUS / CHAT_HISTORY を読んで文脈を把握し、Phase 3 を実装
 - 一時パーサー（`scripts/_import_set1b.cjs`・実行後削除）で抽出。**重複6件を除外**（bodyguards / SANA shampoo 等が複数回出題されていた）し、**ユニーク44問を id 95–138** でシードへ追記。正解は `正解:` テキストを選択肢にマッチさせて index 化（未解決0）。
 - 解説の空欄（`show off ...は「」`）を補完。型・lint パス。**Part 5 は計138問**に。
 - カテゴリは解説からの自動推定のため一部ズレあり（受動態に言及する前置詞問題が「動詞の形」等）。正答・選択肢・解説は正確。要望あれば id 指定で個別修正。
+
+---
+
+## 24. TOEIC Part 6 / Part 7 実装（Gemini 自動生成・2026-06-13）
+
+ユーザー「Part 6/7」。passage ベースのため、Part 5（固定シード）とは別に **Gemini 自動生成**方式を採用（無料枠・出典フリー・毎回新規・著作権安全）。
+
+### 実装内容
+- `src/lib/toeic-generate.ts`: `generatePart6`（文書80–120語＋空所4問）／`generatePart7`（文書130–190語＋設問3問）。Gemini + responseSchema で構造化出力、不正設問は正規化で除外。part6/7 共通の戻り値 `{ part, title, passage, questions:[{prompt, options, answer, explanation}] }`。
+- API `/api/toeic/generate`（POST {part}・認証→usage_log レート制限→生成→usage_log 記録）、`/api/toeic/record`（生成系は再採点不可なのでクライアント集計を信頼して toeic_attempts 保存＋touchStreak）。
+- UI 共通コンポーネント `src/components/app/generated-part.tsx`（intro→生成→本文＋全設問→採点→正誤色分け＆解説＆正答率→再生成）。ページ part6/part7 は薄いラッパ。
+- ハブ `/learn/toeic` の Part 6/7 を利用可能化。
+- 実地検証（一時スクリプト・実行後削除）で Part6=138語/4問・Part7=175語/3問・全問妥当を確認。型・lint パス。
+
+### メモ
+- 生成系の演習結果は toeic_attempts（part=6/7・answers=null）に保存。getToeicCategoryStats は Part5 seed id 照合なので part6/7 行は無視され傾向分析を汚さない。7日グラフ・ストリークには反映。
+
+### 次の予定（候補）
+- TOEIC スコア推定、バッジ獲得システム、音声読み上げ、Vercel 本番設定。

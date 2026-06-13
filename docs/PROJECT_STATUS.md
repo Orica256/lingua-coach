@@ -201,6 +201,13 @@
     - 履歴が少なくても基礎の良問を出す（弱点情報が無ければ「基礎文法全般」で生成）。実地検証で4択・正解index・弱点反映を確認。
     - 導線: サイドバー/モバイルナビに「弱点復習」、`/history` ヘッダーに「弱点を復習する」ボタン。
     - `daily_stats` 事前集計バッチ（Cron）は render 時集計で代替済みのため不要。**Phase 4 は完了**。
+- ✅ **TOEIC Part 6 / Part 7 実装・実地検証済み（2026-06-13）**: passage ベースのため **Gemini で問題セットを自動生成**（無料枠・出典フリー・毎回新規）。
+  - 生成ロジック [src/lib/toeic-generate.ts](../src/lib/toeic-generate.ts)：`generatePart6`（ビジネス文書80–120語＋空所4問）／`generatePart7`（文書130–190語＋設問3問）。`responseSchema` で構造化出力を強制し、不正な設問は正規化で除外。戻り値は part6/7 共通形（`{ part, title, passage, questions:[{prompt, options, answer, explanation}] }`）。
+  - API [/api/toeic/generate](../src/app/api/toeic/generate/route.ts)（POST `{part:6|7}`：認証→usage_log 日次レート制限→生成→usage_log 記録）。[/api/toeic/record](../src/app/api/toeic/record/route.ts)（生成系は再採点不可のためクライアント集計の total/correct を信頼して toeic_attempts へ保存＋`touchStreak`。ストリーク/7日グラフに反映）。
+  - UI: 共通クライアント [src/components/app/generated-part.tsx](../src/components/app/generated-part.tsx)（intro→生成→本文＋全設問を表示→全問解答後「採点」→正誤色分け＆解説＆正答率→「新しい問題」）。ページは [/learn/toeic/part6](../src/app/(app)/learn/toeic/part6/page.tsx) / [/learn/toeic/part7](../src/app/(app)/learn/toeic/part7/page.tsx)（薄いラッパ）。
+  - TOEIC ハブ `/learn/toeic` の Part 6/7 を「今後追加」→**利用可能**に変更。
+  - 実地検証: Part6=138語/4問・Part7=175語/3問、全問 options4・answer 妥当を確認。型・lint パス。
+  - ※生成系の演習結果は `toeic_attempts`（part=6/7・answers=null）に保存。`getToeicCategoryStats` は Part 5 seed id 照合のため part6/7 行は無視され傾向分析を汚さない。7日グラフ・ストリークには反映される。
 - ✅ **ストリーク（連続学習日数）実データ化（2026-06-13）**: 従来は topbar が常に「0日連続」だった。[src/lib/streak.ts](../src/lib/streak.ts) を追加し、`touchStreak`（学習時に streak_days/last_active_at を更新。同日二重カウント無し・前日学習なら+1・間が空けば1にリセット・**JST基準の日付判定**でサーバーTZ非依存）を `/api/correct`・`/api/toeic/submit` 成功時に呼ぶ。表示は `currentStreak`（最終学習が今日/昨日でなければ「途切れ」として0表示）を topbar・ダッシュボードで使用。profiles 書き込みは service_role（0005 で GRANT 済み）。
 - ✅ **設定ページ `/settings` 実装（2026-06-13）**: nav にあって404だったページを実装。[/settings](../src/app/(app)/settings/page.tsx) ＋ クライアントフォーム [src/components/app/settings-form.tsx](../src/components/app/settings-form.tsx)。① 表示名の編集・保存（ブラウザの supabase クライアントで profiles を RLS 経由 update）② 英語レベル表示＋「再判定する」→ `/onboarding` ③ ログアウト。メールは読み取り表示。
 - ✅ **レスポンシブデザイン化 実装完了**（型チェック・lint パス済み・2026-06-13）:
