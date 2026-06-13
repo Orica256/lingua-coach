@@ -18,7 +18,11 @@ import {
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/server";
-import { getRecentActivity, formatActivityDate } from "@/lib/activity";
+import {
+  getRecentActivity,
+  getDailyActivity,
+  formatActivityDate,
+} from "@/lib/activity";
 
 const TYPE_ICON = {
   toeic: BookOpen,
@@ -38,6 +42,7 @@ export default async function DashboardPage() {
     { count: correctionCount },
     { count: toeicCount },
     recentActivity,
+    dailyActivity,
   ] = await Promise.all([
     supabase
       .from("profiles")
@@ -53,7 +58,12 @@ export default async function DashboardPage() {
       .select("id", { count: "exact", head: true })
       .eq("user_id", user!.id),
     getRecentActivity(supabase, user!.id, 5),
+    getDailyActivity(supabase, user!.id, 7),
   ]);
+
+  const daily = dailyActivity;
+  const dailyMax = Math.max(1, ...daily.map((d) => d.count));
+  const hasDailyActivity = daily.some((d) => d.count > 0);
 
   const greetingName =
     profile?.display_name || user?.email?.split("@")[0] || "ゲスト";
@@ -129,7 +139,7 @@ export default async function DashboardPage() {
         </Card>
       )}
 
-      {/* 統計サマリー（添削回数・学習時間は Phase 4 で接続） */}
+      {/* 統計サマリー */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         {stats.map(({ label, value, unit, icon: Icon }) => (
           <Card key={label}>
@@ -150,6 +160,54 @@ export default async function DashboardPage() {
           </Card>
         ))}
       </div>
+
+      {/* 直近7日間の学習グラフ */}
+      <Card>
+        <CardHeader>
+          <CardTitle>直近7日間の学習</CardTitle>
+          <CardDescription>
+            1日ごとの演習・添削の回数です。毎日少しずつ続けましょう。
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {hasDailyActivity ? (
+            <div className="flex items-end gap-2" style={{ height: 128 }}>
+              {daily.map((d) => {
+                const h =
+                  d.count === 0
+                    ? 3
+                    : Math.max(8, Math.round((d.count / dailyMax) * 100));
+                return (
+                  <div
+                    key={d.label}
+                    className="flex flex-1 flex-col items-center justify-end gap-1.5"
+                  >
+                    <span className="text-xs text-muted-foreground tabular-nums">
+                      {d.count > 0 ? d.count : ""}
+                    </span>
+                    <div
+                      className={cn(
+                        "w-full max-w-10 rounded-t",
+                        d.count > 0
+                          ? "bg-gradient-to-t from-indigo-500/70 to-violet-400/80"
+                          : "bg-muted"
+                      )}
+                      style={{ height: `${h}px` }}
+                    />
+                    <span className="text-[10px] text-muted-foreground tabular-nums">
+                      {d.label}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="rounded-lg border border-dashed border-border py-8 text-center text-sm text-muted-foreground">
+              この7日間の学習記録はまだありません。
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* 学習スタート */}
       <Card>

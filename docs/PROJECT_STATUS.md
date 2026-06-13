@@ -195,7 +195,8 @@
   - 共通集計ロジック [src/lib/activity.ts](../src/lib/activity.ts): `getRecentActivity`（toeic_attempts / corrections / level_tests を横断し時系列マージ。テーブル未作成でも data=null を空配列として扱い安全）、`getToeicCategoryStats`（toeic_attempts.answers ×シードで Part 5 カテゴリ別正答率を集計＝弱点可視化）、`formatActivityDate`
   - 学習履歴ページ [/history](../src/app/(app)/history/page.tsx): TOEIC 傾向分析（カテゴリ別バー・正答率の低い順）＋ 学習履歴タイムライン（直近30件）。空状態あり
   - ダッシュボード強化 [dashboard](../src/app/(app)/dashboard/page.tsx): 統計の「学習時間」を実データの「TOEIC演習」回数に差し替え、「最近の学習」を実データ（直近5件）＋「すべて見る」→ `/history` 導線に接続
-  - ⚠️ **未実装（後段・要APIキー or Cron）**: 復習モード `/learn/review`（過去の間違いから Claude で復習問題生成）、`daily_stats` 集計バッチ＋直近7日グラフ、`mistakes` 由来の英会話添削の傾向（corrections が貯まってから）
+  - ✅ **追加実装（2026-06-13・Cron不要）**: ① **ダッシュボードに「直近7日間の学習」棒グラフ**（`getDailyActivity`＝toeic_attempts＋corrections を生データから日次集計。daily_stats バッチ/Cron は使わず render 時集計）② **`/history` に「英会話添削の傾向」**（`getCorrectionMistakeStats`＝corrections.feedback のカテゴリを横断集計しカテゴリ別件数バー）。いずれも [src/lib/activity.ts](../src/lib/activity.ts) に集計関数を追加。
+  - ⚠️ **Phase 4 の残（未実装）**: 復習モード `/learn/review`（過去の間違いから Gemini で復習問題を生成）。`daily_stats` 事前集計バッチ（Cron）は当面不要（render 時集計で代替済み）。
 - ✅ **レスポンシブデザイン化 実装完了**（型チェック・lint パス済み・2026-06-13）:
   - **最大の問題＝アプリ内サイドバーが `hidden md:flex` でモバイルではナビ消失**だった点を解消。モバイル用ドロワーナビ [src/components/app/mobile-nav.tsx](../src/components/app/mobile-nav.tsx) を追加（ハンバーガー→左ドロワー・背景オーバーレイ・ルート遷移で自動クローズ・背景スクロールロック）
   - ナビ項目を [src/components/app/nav-items.ts](../src/components/app/nav-items.ts) に共通化し、サイドバー（PC）とドロワー（モバイル）で共有
@@ -247,8 +248,8 @@
    - [0003_corrections.sql](../supabase/migrations/0003_corrections.sql) 実行 + `ANTHROPIC_API_KEY` 設定 → `/learn/typing`（Phase 3 タイピング添削）の動作確認
    - TOEIC 問題の Claude 生成（`toeic_questions` バンク + `/api/toeic/generate`）を追加
 3. **TOEIC の横展開**: ~~Part 5 の問題数追加~~（2026-06-12 に 40 問へ拡充済み・さらなる追加も可）、Part 6/7、Listening（Web Speech API TTS）、TOEIC スコア推定。
-4. **Phase 4 の残り**: 復習モード `/learn/review`（要APIキー）、`daily_stats` 集計＋直近7日グラフ（要 Cron）、英会話添削（corrections）の傾向分析（データが貯まってから）。
-   - ※`/history`・TOEIC傾向分析・ダッシュボードの最近の学習/TOEIC演習回数は実装済み。
+4. **Phase 4 の残り**: 復習モード `/learn/review`（過去の間違いから Gemini で復習問題を生成）のみ。
+   - ※直近7日グラフ・英会話添削の傾向・TOEIC傾向・履歴/最近の学習は実装済み（Cron不要）。
 
 ### ⚠️ 新しいPCで開発する際の注意
 - **まず [scripts/setup.ps1](../scripts/setup.ps1) を1回実行する**（Windows / PowerShell・**管理者権限不要**）。

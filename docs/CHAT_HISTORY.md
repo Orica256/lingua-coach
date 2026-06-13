@@ -417,3 +417,24 @@ PROJECT_STATUS / CHAT_HISTORY を読んで文脈を把握し、Phase 3 を実装
 
 ### 次の予定
 - 採点厳格化のコミット&push。その後 TOEIC の Gemini 自動生成 / Phase 4 残り等。
+
+---
+
+## 19. Phase 4 残りの一部実装（進捗可視化・2026-06-13）
+
+ユーザー「Phase 4 の残りをお願いします」。残3項目のうち、Cron 不要で価値の高い2つを実装。
+
+### 実装内容
+- `src/lib/activity.ts` に集計関数を追加:
+  - `getDailyActivity(supabase, userId, days=7)`: 直近7日の1日あたり学習回数（toeic_attempts＋corrections）を**生データから render 時集計**（daily_stats バッチ/Cron は使わない）。0回の日も0で埋めて7要素返す。
+  - `getCorrectionMistakeStats(supabase, userId)`: corrections.feedback.corrections[].category を横断集計し、カテゴリ別件数を多い順に返す。
+- **ダッシュボード**: 「直近7日間の学習」棒グラフ（CSS のみ・チャートライブラリ不使用）を統計サマリーの下に追加。
+- **`/history`**: 「英会話添削の傾向」カード（カテゴリ別件数バー・rose 色）を TOEIC 傾向の下に追加。データが無ければ非表示。
+- 型チェック・lint パス。
+
+### Phase 4 の残（次）
+- 復習モード `/learn/review`（過去の間違いから Gemini で復習問題を生成）。これだけが未実装。
+- `daily_stats` 事前集計バッチ（Cron）は render 時集計で代替済みのため当面不要。
+
+### 次の予定
+- 復習モード `/learn/review` の実装（Gemini・無料枠）。または本実装のコミット&push。

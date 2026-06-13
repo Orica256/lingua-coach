@@ -14,6 +14,7 @@ import { createClient } from "@/lib/supabase/server";
 import {
   getRecentActivity,
   getToeicCategoryStats,
+  getCorrectionMistakeStats,
   formatActivityDate,
   type ActivityType,
 } from "@/lib/activity";
@@ -36,10 +37,13 @@ export default async function HistoryPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const [activity, categoryStats] = await Promise.all([
+  const [activity, categoryStats, mistakeStats] = await Promise.all([
     getRecentActivity(supabase, user!.id, 30),
     getToeicCategoryStats(supabase, user!.id),
+    getCorrectionMistakeStats(supabase, user!.id),
   ]);
+
+  const mistakeMax = mistakeStats.length > 0 ? mistakeStats[0].count : 1;
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6">
@@ -97,6 +101,38 @@ export default async function HistoryPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* 英会話添削の傾向（よく出る誤り） */}
+      {mistakeStats.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">英会話添削の傾向</CardTitle>
+            <CardDescription>
+              これまでの添削で指摘された誤りのカテゴリ別件数です（多い順）。
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col gap-3">
+              {mistakeStats.map((s) => (
+                <div key={s.category} className="flex flex-col gap-1.5">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="font-medium">{s.category}</span>
+                    <span className="text-muted-foreground tabular-nums">
+                      {s.count}件
+                    </span>
+                  </div>
+                  <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                    <div
+                      className="h-full rounded-full bg-rose-500/70 transition-all"
+                      style={{ width: `${(s.count / mistakeMax) * 100}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* 学習履歴タイムライン */}
       <Card>

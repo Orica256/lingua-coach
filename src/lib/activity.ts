@@ -130,6 +130,91 @@ export async function getToeicCategoryStats(
   return stats;
 }
 
+export interface DailyCount {
+  /** "M/D" 形式のラベル */
+  label: string;
+  count: number;
+}
+
+/**
+ * 直近 days 日間の1日あたりの学習回数（TOEIC演習＋英会話添削）を集計する。
+ * 生データから render 時に集計するため daily_stats バッチ／Cron は不要。
+ * 古い日付→新しい日付の順に days 個返す（演習0の日も0で埋める）。
+ */
+export async function getDailyActivity(
+  supabase: SupabaseServerClient,
+  userId: string,
+  days = 7
+): Promise<DailyCount[]> {
+  const start = new Date();
+  start.setHours(0, 0, 0, 0);
+  start.setDate(start.getDate() - (days - 1));
+
+  const [toeic, corrections] = await Promise.all([
+    supabase
+      .from("toeic_attempts")
+      .select("created_at")
+      .eq("user_id", userId)
+      .gte("created_at", start.toISOString()),
+    supabase
+      .from("corrections")
+      .select("created_at")
+      .eq("user_id", userId)
+      .gte("created_at", start.toISOString()),
+  ]);
+
+  const keyOf = (d: Date) => `${d.getMonth() + 1}/${d.getDate()}`;
+  const buckets = new Map<string, number>();
+  for (let i = 0; i < days; i++) {
+    const d = new Date(start);
+    d.setDate(start.getDate() + i);
+    buckets.set(keyOf(d), 0);
+  }
+  const bump = (iso: string) => {
+    const k = keyOf(new Date(iso));
+    if (buckets.has(k)) buckets.set(k, (buckets.get(k) ?? 0) + 1);
+  };
+  for (const r of toeic.data ?? []) bump(r.created_at);
+  for (const r of corrections.data ?? []) bump(r.created_at);
+
+  return Array.from(buckets.entries()).map(([label, count]) => ({
+    label,
+    count,
+  }));
+}
+
+export interface MistakeStat {
+  category: string;
+  count: number;
+}
+
+/**
+ * 英会話添削（corrections.feedback.corrections[].category）を横断集計し、
+ * よく指摘される誤りカテゴリを件数の多い順に返す（弱点の可視化）。
+ */
+export async function getCorrectionMistakeStats(
+  supabase: SupabaseServerClient,
+  userId: string
+): Promise<MistakeStat[]> {
+  const { data } = await supabase
+    .from("corrections")
+    .select("feedback")
+    .eq("user_id", userId);
+
+  const buckets = new Map<string, number>();
+  for (const row of data ?? []) {
+    const fb = row.feedback as { corrections?: { category?: string }[] } | null;
+    for (const c of fb?.corrections ?? []) {
+      const cat = (c.category && String(c.category)) || "その他";
+      buckets.set(cat, (buckets.get(cat) ?? 0) + 1);
+    }
+  }
+
+  return Array.from(buckets.entries())
+    .map(([category, count]) => ({ category, count }))
+    .sort((a, b) => b.count - a.count);
+}
+
 /** ISO 日時を「MM/DD HH:mm」形式（日本語ロケール）に整形する。 */
 export function formatActivityDate(iso: string): string {
   return new Date(iso).toLocaleString("ja-JP", {
