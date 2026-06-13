@@ -185,7 +185,7 @@
   - ℹ️ **AI プロバイダは Gemini（無料枠）に移行・動作確認済み**（下記「Gemini 移行」参照）。0003・0005 実行済み・`GEMINI_API_KEY` 設定済みで稼働中。
 - ✅ **Phase 5: TOEIC Part 5 演習（最小縦割り）実装完了・動作確認済み**（型チェック・lint パス済み・**APIキー不要で動作**）:
   - `toeic_attempts` テーブル作成（[supabase/migrations/0004](../supabase/migrations/0004_toeic_attempts.sql)）— RLS・本人 insert ポリシー付き。**Supabase SQL Editor で実行済み**（ユーザーが Part 5 演習を通しで動作確認・2026-06-11）
-  - 自作シードバンク [src/data/toeic-part5-seed.ts](../src/data/toeic-part5-seed.ts) — **オリジナル Part 5 問題94問**（公式過去問の転載なし／20→40→**2026-06-13 にユーザー自作〔AI生成〕のオリジナル54問〔id 41–94〕を取り込み計94問**。取り込み元 `Set 1.txt` は統合後に削除）。品詞/動詞の形/前置詞/接続詞/関係詞/代名詞/比較/数量/語彙の9カテゴリをほぼ均等（各4〜6問）に配置。各問に日本語解説・目標スコア帯付き。出題は全プールからランダム10問、採点・カテゴリ集計はすべて id 照合のため、新 id 追加だけで安全に拡張できる構造
+  - 自作シードバンク [src/data/toeic-part5-seed.ts](../src/data/toeic-part5-seed.ts) — **オリジナル Part 5 問題138問**（公式過去問の転載なし／20→40→**ユーザー自作〔AI生成〕問題を2回取り込み**: 第1弾54問〔id 41–94〕＋第2弾44問〔id 95–138〕＝計138問。第2弾は演習出力 `set1.txt` から「不正解/あなたの答え」行を破棄し `正解:` を答えに採用、重複6件を除外、空欄解説を補完。取り込み元 txt は統合後に削除可）。品詞/動詞の形/前置詞/接続詞/関係詞/代名詞/比較/数量/語彙の9カテゴリをほぼ均等（各4〜6問）に配置。各問に日本語解説・目標スコア帯付き。出題は全プールからランダム10問、採点・カテゴリ集計はすべて id 照合のため、新 id 追加だけで安全に拡張できる構造
   - API `POST /api/toeic/submit`（[route](../src/app/api/toeic/submit/route.ts)）: サーバー側採点 → `toeic_attempts` 保存（クライアントの自己申告は不採用）
   - 画面: [/learn/toeic](../src/app/(app)/learn/toeic/page.tsx)（パート選択ハブ・Part 6/7・Listening は「今後追加」表示）、[/learn/toeic/part5](../src/app/(app)/learn/toeic/part5/page.tsx)（10問ランダム出題・1問ごとに即時正誤＆解説・結果に正答率＆復習一覧）
   - 導線追加: サイドバーに「TOEIC学習」、ダッシュボードの「学習を始める」に TOEIC ボタン。既存の「タイピング添削」表記は「英会話添削」に変更
