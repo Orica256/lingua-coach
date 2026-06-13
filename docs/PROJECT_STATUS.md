@@ -208,6 +208,13 @@
   - TOEIC ハブ `/learn/toeic` の Part 6/7 を「今後追加」→**利用可能**に変更。
   - 実地検証: Part6=138語/4問・Part7=175語/3問、全問 options4・answer 妥当を確認。型・lint パス。
   - ※生成系の演習結果は `toeic_attempts`（part=6/7・answers=null）に保存。`getToeicCategoryStats` は Part 5 seed id 照合のため part6/7 行は無視され傾向分析を汚さない。7日グラフ・ストリークには反映される。
+- ✅ **Part 6/7 の問題保存・再利用（個人バンク）実装（2026-06-13）**: 生成コスト削減のため、気に入った問題を保存して再演習できる。
+  - **DB**: `toeic_generated` テーブル（マイグレーション [0006](../supabase/migrations/0006_toeic_generated.sql)・part/title/passage/questions(jsonb)・RLS で本人のみ select/insert/delete・authenticated と service_role に GRANT）。**※Supabase で要実行（未実行）**。
+  - **保存**: 採点後に「この問題を保存」ボタン → API [/api/toeic/save](../src/app/api/toeic/save/route.ts) で本人の `toeic_generated` へ insert。
+  - **再利用**: 保存一覧 [/learn/toeic/saved](../src/app/(app)/learn/toeic/saved/page.tsx)（タイトル・問題数・日付）→ 個別 [/learn/toeic/saved/[id]](../src/app/(app)/learn/toeic/saved/[id]/page.tsx) で**生成せず無料で再演習**（削除ボタン付き [delete-saved-button.tsx](../src/components/app/delete-saved-button.tsx)）。
+  - **共通化**: クイズ表示を [src/components/app/passage-quiz.tsx](../src/components/app/passage-quiz.tsx) に切り出し、生成フロー（`canSave` で保存ボタン表示）と保存再演習で共有。`generated-part.tsx` はこれを利用する形にリファクタ。
+  - 導線: TOEIC ハブと Part 6/7 の intro に「保存した問題から選ぶ」を追加。
+  - 効果: 保存問題は **API を呼ばず即時・無料**で解ける → Gemini 生成回数（コスト・無料枠消費）を実利用で削減。型・lint パス。
 - ✅ **ストリーク（連続学習日数）実データ化（2026-06-13）**: 従来は topbar が常に「0日連続」だった。[src/lib/streak.ts](../src/lib/streak.ts) を追加し、`touchStreak`（学習時に streak_days/last_active_at を更新。同日二重カウント無し・前日学習なら+1・間が空けば1にリセット・**JST基準の日付判定**でサーバーTZ非依存）を `/api/correct`・`/api/toeic/submit` 成功時に呼ぶ。表示は `currentStreak`（最終学習が今日/昨日でなければ「途切れ」として0表示）を topbar・ダッシュボードで使用。profiles 書き込みは service_role（0005 で GRANT 済み）。
 - ✅ **設定ページ `/settings` 実装（2026-06-13）**: nav にあって404だったページを実装。[/settings](../src/app/(app)/settings/page.tsx) ＋ クライアントフォーム [src/components/app/settings-form.tsx](../src/components/app/settings-form.tsx)。① 表示名の編集・保存（ブラウザの supabase クライアントで profiles を RLS 経由 update）② 英語レベル表示＋「再判定する」→ `/onboarding` ③ ログアウト。メールは読み取り表示。
 - ✅ **レスポンシブデザイン化 実装完了**（型チェック・lint パス済み・2026-06-13）:

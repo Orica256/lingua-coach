@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, BookOpen, Headphones, Lock } from "lucide-react";
+import { ArrowRight, Bookmark, BookOpen, Headphones, Lock } from "lucide-react";
 
 import { buttonVariants } from "@/components/ui/button";
 import {
@@ -123,6 +123,24 @@ export default function ToeicHubPage() {
           >
             Part 5 を始める
             <ArrowRight />
+          </Link>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">保存した問題</CardTitle>
+          <CardDescription>
+            Part 6/7 で「この問題を保存」した良問を、生成せずに無料で再演習できます。
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Link
+            href="/learn/toeic/saved"
+            className={cn(buttonVariants({ variant: "outline" }), "h-9 px-4")}
+          >
+            <Bookmark className="size-4" />
+            保存した問題を見る
           </Link>
         </CardContent>
       </Card>

@@ -536,3 +536,26 @@ PROJECT_STATUS / CHAT_HISTORY を読んで文脈を把握し、Phase 3 を実装
 
 ### 次の予定（候補）
 - TOEIC スコア推定、バッジ獲得システム、音声読み上げ、Vercel 本番設定。
+
+---
+
+## 25. Part 6/7 の問題保存・再利用（個人バンク・2026-06-13）
+
+ユーザー提案「長文生成はコストが高いので、評価の高そうな問題を記録できれば負担が減るのでは」。→ 気に入った問題を保存して再演習する個人バンクを実装（「問題を選択できる形で・個人用」）。
+
+### 実装内容
+- **DB**: `toeic_generated`（マイグレーション 0006・part/title/passage/questions(jsonb)・RLS 本人のみ・authenticated と service_role に GRANT）。※Supabase で要実行。
+- **保存**: 採点後の「この問題を保存」ボタン → `/api/toeic/save`（cookie クライアントで RLS insert）。
+- **再利用**: 一覧 `/learn/toeic/saved` → 個別 `/learn/toeic/saved/[id]` で**生成せず無料で再演習**（`delete-saved-button.tsx` で削除可）。
+- **共通化**: クイズ UI を `src/components/app/passage-quiz.tsx` に切り出し、生成フロー（canSave で保存ボタン）と保存再演習で共有。`generated-part.tsx` をリファクタ。
+- 導線: TOEIC ハブと Part 6/7 intro に「保存した問題から選ぶ」。
+- 型・lint パス。
+
+### 効果
+- 保存問題は API を呼ばず即時・無料で解ける → Gemini 生成回数（コスト・無料枠 RPM/RPD・1日200回）を実利用で削減。
+
+### ユーザー側の残作業
+- Supabase SQL Editor で `0006_toeic_generated.sql` を実行（保存機能を使うため）。
+
+### 次の予定（候補）
+- TOEIC スコア推定、バッジ、音声読み上げ、Vercel 本番設定。
