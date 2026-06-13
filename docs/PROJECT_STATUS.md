@@ -19,7 +19,23 @@
 
 ---
 
-最終更新: 2026-06-13（**レスポンシブデザイン化 実装完了（モバイルドロワーナビ追加）** / Phase 3 添削実装済〔Anthropic→Gemini 無料移行を検討中〕 / Phase 5 TOEIC Part 5 実装完了・動作確認済み・問題40問 / Phase 4 学習履歴・傾向分析（一部）実装完了〔APIキー不要〕 / 新規PC向け setup.ps1 / Vercel デプロイ進行中）
+## 🔧 セッション開始時の自動セットアップ（Claude が最初に必ず行うこと）
+
+> **Claude へ: このファイルを読んだ直後に、まず `.env.local` の有無を確認し、無ければ自動で作成すること。**
+> clone 直後は `.env.local` が必ず無く（Git 管理外）、無いと dev サーバーが `Your project's URL and Key are required...` で起動失敗する。
+
+手順:
+1. `.env.local` が**存在しない場合のみ**、[.env.example](../.env.example) をコピーして `.env.local` を作成する（既にあれば何もしない・上書き厳禁）。
+2. 非機密の値は埋めてよい: `NEXT_PUBLIC_SUPABASE_URL=https://sshauvkhsdpwkgagcvfi.supabase.co` / `GEMINI_MODEL=gemini-2.5-flash` / `LLM_PROVIDER=gemini` / `NEXT_PUBLIC_APP_URL=http://localhost:3000`。
+3. **機密キーは Git 管理外のためコピーには含まれない**。作成後、ユーザーに次を取得・貼り付けるよう案内する:
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY` / `SUPABASE_SERVICE_ROLE_KEY` … Supabase → Settings → API
+   - `GEMINI_API_KEY` … [Google AI Studio](https://aistudio.google.com/apikey)（無料・課金登録不要）
+4. 機密キー貼り付け後は **dev サーバーを再起動**（環境変数は起動時のみ読込）。
+5. Windows なら [scripts/setup.ps1](../scripts/setup.ps1) が上記（.env.local 雛形＋`npm install` 等）を一括で行う。
+
+---
+
+最終更新: 2026-06-13（**英会話添削を Gemini（無料枠・gemini-2.5-flash）に移行・動作確認済み（無料で稼働）** / service_role 403 問題を 0005 で修正 / レスポンシブデザイン化 実装完了 / Phase 5 TOEIC Part 5 動作確認済み・問題40問 / Phase 4 学習履歴・傾向分析（一部）実装完了 / 新規PC向け setup.ps1 / Vercel デプロイ進行中）
 
 ---
 
@@ -166,7 +182,7 @@
   - 画面 `/learn/typing`（[page](../src/app/(app)/learn/typing/page.tsx)）：シーン選択（プリセット6種＋自由入力）→英文入力→添削結果（修正文・自然さスコア・カテゴリ別指摘・改善例）。ダークテック風 UI
   - プリセットシーン [src/data/typing-scenes.ts](../src/data/typing-scenes.ts)
   - ダッシュボードの「添削回数」を `corrections` 件数に接続
-  - ⚠️ **動作確認の前提（残タスク）**: ① Supabase SQL Editor で `0003_corrections.sql` を実行 ② `.env.local` の `ANTHROPIC_API_KEY` に値を設定（Anthropic Console で発行・予算上限$20）→ 開発サーバー再起動
+  - ℹ️ **AI プロバイダは Gemini（無料枠）に移行・動作確認済み**（下記「Gemini 移行」参照）。0003・0005 実行済み・`GEMINI_API_KEY` 設定済みで稼働中。
 - ✅ **Phase 5: TOEIC Part 5 演習（最小縦割り）実装完了・動作確認済み**（型チェック・lint パス済み・**APIキー不要で動作**）:
   - `toeic_attempts` テーブル作成（[supabase/migrations/0004](../supabase/migrations/0004_toeic_attempts.sql)）— RLS・本人 insert ポリシー付き。**Supabase SQL Editor で実行済み**（ユーザーが Part 5 演習を通しで動作確認・2026-06-11）
   - 自作シードバンク [src/data/toeic-part5-seed.ts](../src/data/toeic-part5-seed.ts) — **オリジナル Part 5 問題40問**（公式過去問の転載なし／2026-06-12 に 20→40 問へ拡充）。品詞/動詞の形/前置詞/接続詞/関係詞/代名詞/比較/数量/語彙の9カテゴリをほぼ均等（各4〜6問）に配置。各問に日本語解説・目標スコア帯付き。出題は全プールからランダム10問、採点・カテゴリ集計はすべて id 照合のため、新 id 追加だけで安全に拡張できる構造
@@ -187,6 +203,15 @@
   - ランディング [page](../src/app/page.tsx) ヘッダーの「ログイン」を `< sm` で非表示にして狭幅の崩れを防止（ヒーロー内に同ボタンあり）
   - 既存ページは元々 `sm`/`lg` ブレークポイントで組まれており（grid-cols / flex-col→sm:flex-row 等）、追加修正は不要だった
   - ⚠️ 実機・devtools での目視確認はユーザー側で推奨（dev サーバーで幅360px等を確認）
+- ✅ **英会話添削を Gemini（無料枠）に移行・実装完了**（型チェック・lint パス済み・2026-06-13・ユーザーが無料枠スペック確認済み: gemini-2.5-flash / 10 RPM / 250 RPD / データ利用は許容）:
+  - `@google/genai` 導入。Gemini 添削 [src/lib/gemini.ts](../src/lib/gemini.ts)（`gemini-2.5-flash`・`responseSchema` で JSON 構造化出力を強制・`temperature 0.3`）
+  - **共通化**: 型・システムプロンプト（`<user_text>` デリミタのインジェクション対策含む）・出力正規化を [src/lib/correction.ts](../src/lib/correction.ts) に集約。Gemini / Anthropic 両実装で共有
+  - **プロバイダ切替**: env `LLM_PROVIDER`（`gemini`/`anthropic`）。未指定ならキーがある方を自動選択（**Gemini 優先**）。各実装は動的 import で未使用 SDK を読み込まない
+  - [src/lib/anthropic.ts](../src/lib/anthropic.ts) は `correctWithAnthropic` にリネームし共通モジュールを利用（任意プロバイダとして温存）
+  - API `/api/correct` は `@/lib/correction` の `correctText` / `isCorrectionConfigured` を使用（キー未設定時はプロバイダ非依存の 503 メッセージ）
+  - [.env.example](../.env.example) に `LLM_PROVIDER` / `GEMINI_API_KEY` / `GEMINI_MODEL` を追記
+  - ✅ **動作確認済み（2026-06-13・無料で稼働）**: `/learn/typing` で実際に Gemini 添削が返り（自然さスコア・総評・修正文）、`corrections`／`usage_log` への保存も確認。
+  - 🩹 **デバッグで判明した不具合と修正（重要）**: 最初 `/api/correct` が 500。原因は **service_role が usage_log/corrections に 403**（GRANT 不足）。Supabase 設定「Automatically expose new tables: OFF」のため、新規テーブルは明示 GRANT した role しかアクセスできず、既存マイグレーションは `authenticated` にしか GRANT しておらず **service_role への GRANT が抜けていた**（service_role は RLS は飛び越えるが GRANT 権限は別途必要）。→ [supabase/migrations/0005_grant_service_role.sql](../supabase/migrations/0005_grant_service_role.sql) で service_role に GRANT 付与し解消（**Supabase で実行済み**）。Gemini キー自体は正常（`AQ.Ab8...` は Google の新形式・有効）だった。
 
 ### Supabase プロジェクト情報
 - Project URL: `https://sshauvkhsdpwkgagcvfi.supabase.co`
@@ -194,6 +219,7 @@
 - プロジェクト作成時設定: Data API ON / auto-expose new tables OFF / automatic RLS ON
 - テスト時は Authentication → Email の「Confirm email」を OFF にして検証（本番前に要再考）
 - マイグレーションは Supabase の SQL Editor に手貼りして実行（Supabase CLI は未導入）
+- ⚠️ **新規テーブルを追加したら service_role にも GRANT すること**（重要・再発防止）。本プロジェクトは「Automatically expose new tables: OFF」のため、新規テーブルは明示 GRANT した role しかアクセスできない。サーバー側書き込み（admin クライアント＝service_role）を使うテーブルは、`authenticated` だけでなく **`service_role` への GRANT も必須**。抜けると 403→APIが500になる（0005 で一括付与済み・新テーブル追加時は同様に追記する）。
 
 ### Phase 0/外部サービスの残タスク（ユーザー側）
 - Anthropic アカウント・APIキー発行（Phase 3 で使用）、予算上限$20設定
@@ -214,10 +240,7 @@
 
 ### 次のステップ
 0. ✅ **済: レスポンシブデザイン化**（2026-06-13 実装完了）。モバイルでサイドバーが消えてナビ不能だった問題をドロワーナビで解消。全ページは既存ブレークポイントで対応済み。→ 実機での目視確認のみ残（ユーザー）。
-1. 🔜 **次に着手予定: 英会話添削の AI を Anthropic → Gemini（無料枠）へ移行（2026-06-13 ユーザー提案・優先）**。
-   - 手順: **(1) ユーザーが Gemini 無料枠の最新スペック（モデル・RPM/RPD 上限・データ利用規約）を確認** → (2) 確認後に実装着手。
-   - 実装方針: `src/lib/anthropic.ts` と同じ戻り値インターフェース（`CorrectionResponse`）で Gemini 実装（`@google/generative-ai`・env `GEMINI_API_KEY`）を追加し、`/api/correct`・DB保存・プロンプト/デリミタはほぼ流用。Gemini の JSON スキーマ出力で堅牢化。env でプロバイダ切替可に。
-   - 詳細は「開発判断のメモ」参照。
+1. ✅ **済: 英会話添削を Gemini（無料枠）に移行・動作確認済み**（2026-06-13）。`@google/genai` / `gemini-2.5-flash` で**無料稼働**。0003（corrections）・0005（service_role GRANT）実行済み・`GEMINI_API_KEY` 設定済み。
 2. ✅ **済: TOEIC Part 5 の動作確認**（0004 実行済み・10問演習を通しで確認・2026-06-11）。`/history` の TOEIC 傾向分析・タイムラインもこのデータで表示される。
 2. **APIキー登録後にまとめて実施（課金が本当に必要になった段階）**:
    - [0003_corrections.sql](../supabase/migrations/0003_corrections.sql) 実行 + `ANTHROPIC_API_KEY` 設定 → `/learn/typing`（Phase 3 タイピング添削）の動作確認
@@ -287,7 +310,7 @@ git pull
   - 影響: **Phase 3（タイピング添削）の Claude 連携部分の動作確認はキー登録時まで保留**（コードは実装済み・APIキー未設定時は 503 を返す）。
   - **Phase 5（TOEIC Part 5）は自作シードバンクで先行実装**し、APIキー不要でテスト可能にする。Claude による問題追加生成（`/generate`）はキー登録後に有効化する。
   - **アプリ方針との整合**: Part 5/6/7（Reading）はテキストベースで「選択式＋記入式のみ」の方針に完全に合致し、既存の4択クイズ基盤（level-quiz）を流用できる。Part 1〜4（Listening）は音声が必要で、本アプリは音声出力が Web Speech API のみのため、スクリプトの TTS 読み上げで擬似対応する想定（実試験音声との品質差に注意）→ 優先度は後段。
-- **英会話添削の AI を Anthropic → Gemini（無料枠）へ移行する提案（2026-06-13）**: 「Gemini API の無料枠を使えば添削を無料で行えるのでは」とのユーザー提案。プロジェクトの「追加費用が発生しない方針」に合致し、これまで課金懸念で保留していた Phase 3 添削を**無料で稼働できる**のが最大の利点。
+- **英会話添削の AI を Anthropic → Gemini（無料枠）へ移行（2026-06-13 提案 → 同日 実装完了）**: 「Gemini API の無料枠を使えば添削を無料で行えるのでは」とのユーザー提案。プロジェクトの「追加費用が発生しない方針」に合致し、これまで課金懸念で保留していた Phase 3 添削を**無料で稼働できる**のが最大の利点。**ユーザーが無料枠スペックを確認**（gemini-2.5-flash / 10 RPM / 250 RPD / データ利用許容）→ `@google/genai` で実装完了。プロバイダは env `LLM_PROVIDER` で切替可・既定 Gemini。Anthropic 実装も温存。
   - **メリット**: 個人利用なら実質$0（Google AI Studio のキー・課金登録不要）。Flash 系モデルで添削品質は十分。既存設計は LLM 呼び出しが `src/lib/anthropic.ts` に分離されているため**差し替えは呼び出し部のみ**。Gemini は JSON スキーマ出力に対応し、手動パースより堅牢化できる。将来の TOEIC 問題自動生成も同じ無料枠で実現可。
   - **注意点（要確認）**: ① **無料枠は入力データが製品改善（学習）に使われる規約**（有料従量枠は使われない）。日本リージョンは対象になり得る → 自分の英作文を入力する個人利用なら許容範囲だが方針として明示。② 無料枠には RPM/RPD のレート制限あり（個人利用なら十分・アプリ側の1日200回制限と併用）。③ 無料枠の正確な上限・対象モデルは変動するため実装前に最新値を確認。
   - **進め方の合意**: **まずユーザーが Gemini 無料枠の最新スペック（モデル・上限・データ利用規約）を確認** → その後に実装着手。レスポンシブ化を先に終わらせてから本件に進む（→ レスポンシブは 2026-06-13 完了済み）。

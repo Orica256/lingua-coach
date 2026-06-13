@@ -347,3 +347,55 @@ PROJECT_STATUS / CHAT_HISTORY を読んで文脈を把握し、Phase 3 を実装
 
 ### 次の予定
 - ユーザーが Gemini 無料枠スペックを確認後、Gemini 添削を実装（`@google/generative-ai` 導入・プロバイダ切替）。
+
+---
+
+## 16. 実装セッション（2026-06-13・続き / Gemini 添削の実装）
+
+ユーザーが Gemini 無料枠スペックを確認（**gemini-2.5-flash / 10 RPM・250,000 TPM・250 RPD / データ利用は許容**）→ そのまま実装。
+
+### 実装内容
+- **SDK**: `@google/genai`（新しい統合 SDK。旧 `@google/generative-ai` ではなくこちらを採用）を導入。
+- **共通化**: 型・システムプロンプト（`<user_text>` デリミタによるインジェクション対策込み）・出力正規化・JSON 抽出を `src/lib/correction.ts` に集約し、Gemini / Anthropic 両実装で共有。
+- **Gemini 実装** `src/lib/gemini.ts`: `gemini-2.5-flash`、`responseMimeType: application/json` + `responseSchema` で構造化出力を強制（手動パースより堅牢）、`temperature 0.3`。usageMetadata からトークン数を取得。
+- **Anthropic** は `correctWithAnthropic` にリネームして共通モジュール利用に変更（任意プロバイダとして温存）。
+- **プロバイダ切替**: `correction.ts` の `resolveProvider()`＝env `LLM_PROVIDER`（gemini/anthropic）→ 未指定ならキーのある方（**Gemini 優先**）。`correctText()` は動的 import で未使用 SDK を読み込まない。
+- **API** `/api/correct`: `isCorrectionConfigured()` でキー有無を判定し、未設定時はプロバイダ非依存の 503。`correctText` を共通モジュールから呼ぶように変更。
+- `.env.example` に `LLM_PROVIDER` / `GEMINI_API_KEY` / `GEMINI_MODEL` を追記。Gemini を既定にし、Anthropic キーは空例に。
+- 型チェック・lint パス。
+
+### ユーザー側の残作業（動作確認）
+1. `0003_corrections.sql` を Supabase SQL Editor で実行（履歴・添削回数の保存用）。
+2. https://aistudio.google.com/apikey で**無料**キー取得 → `.env.local` に `GEMINI_API_KEY=` 設定 → dev 再起動。
+3. `/learn/typing` で英文を入力し、添削が返ること・ダッシュボードの添削回数が増えることを確認。
+
+### 意義
+- これまで「課金が怖いので保留」だった Phase 3 添削が、**無料で稼働可能**になった。従量課金の Anthropic は env 切替でいつでも併用可能。
+
+### 次の予定
+- Gemini 添削の動作確認（ユーザー）。その後 TOEIC 問題の Gemini 自動生成や Phase 4 残りへ。
+
+---
+
+## 17. デバッグ: 添削API が 500（service_role の GRANT 不足）→ 修正・稼働確認（2026-06-13）
+
+### 症状
+- `/learn/typing` で「添削する」を押すとボタンが一瞬回って何も出ない。ターミナルに `POST /api/correct 500`。
+
+### 切り分け
+1. `.env.local` を確認 → `GEMINI_API_KEY=AQ.Ab8...`（`AIza...` でない新形式）。**キーを直接テスト**（models.list を x-goog-api-key ヘッダーで叩く）→ **HTTP 200**＝キーは有効。原因はキーではない。
+2. 500 は Gemini 呼び出し前（レート制限の usage_log 参照）と推定 → **service_role キーで REST に直接アクセス**して確認 → `usage_log`/`corrections`/`toeic_attempts` すべて **403**。
+3. 原因確定: プロジェクト設定「Automatically expose new tables: OFF」のため、新規テーブルは明示 GRANT した role のみアクセス可。マイグレーションは `authenticated` にしか GRANT しておらず、**サーバー側書き込みに使う service_role への GRANT が抜けていた**。service_role は RLS は飛び越えるが、テーブルの GRANT 権限は別途必要。
+
+### 修正
+- `supabase/migrations/0005_grant_service_role.sql` を作成し、service_role に `usage_log`/`corrections`/`toeic_attempts`/`profiles`/`level_tests` の GRANT を付与。ユーザーが Supabase で実行。
+- 併せて `/api/correct` のエラーメッセージを具体化（500/502 の原因が画面・ログに出るよう改善）。
+
+### 確認
+- 実行後、service_role の REST アクセスが **403→200**。`/learn/typing` で Gemini 添削が返り（自然さ98/100 等）、`corrections`・`usage_log` に各1件保存を確認。**英会話添削が無料で完全稼働**。
+
+### 再発防止（重要メモ）
+- 今後 **新規テーブルを足したら service_role にも GRANT** する（admin クライアントで触る場合）。PROJECT_STATUS の「Supabase プロジェクト情報」に注意書きを追加済み。
+
+### 次の予定
+- 一連の変更（Gemini 実装・0005・docs）のコミット&push。その後 TOEIC 問題の Gemini 自動生成 / Phase 4 残り等。
