@@ -60,19 +60,19 @@ export default function Home() {
       <GridGlow />
 
       {/* ヘッダー */}
-      <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-5">
+      <header className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-4 py-5 sm:px-6">
         <Logo size="md" />
         <nav className="flex items-center gap-2">
           <Link
             href="/login"
-            className={cn(buttonVariants({ variant: "ghost", size: "lg" }))}
+            className={cn(
+              buttonVariants({ variant: "ghost", size: "lg" }),
+              "hidden sm:inline-flex"
+            )}
           >
             ログイン
           </Link>
-          <Link
-            href="/signup"
-            className={cn(buttonVariants({ size: "lg" }))}
-          >
+          <Link href="/signup" className={cn(buttonVariants({ size: "lg" }))}>
             無料で始める
           </Link>
         </nav>

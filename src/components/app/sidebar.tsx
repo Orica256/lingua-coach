@@ -2,26 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  BookOpen,
-  Clock,
-  LayoutDashboard,
-  PenLine,
-  Settings,
-  Trophy,
-} from "lucide-react";
 
 import { Logo } from "@/components/brand";
 import { cn } from "@/lib/utils";
-
-const navItems = [
-  { href: "/dashboard", label: "ダッシュボード", icon: LayoutDashboard },
-  { href: "/learn/typing", label: "英会話添削", icon: PenLine },
-  { href: "/learn/toeic", label: "TOEIC学習", icon: BookOpen },
-  { href: "/history", label: "学習履歴", icon: Clock },
-  { href: "/badges", label: "バッジ", icon: Trophy },
-  { href: "/settings", label: "設定", icon: Settings },
-] as const;
+import { NAV_ITEMS } from "./nav-items";
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -32,7 +16,7 @@ export function Sidebar() {
         <Logo size="md" href="/dashboard" />
       </div>
       <nav className="flex flex-1 flex-col gap-1 px-3 py-2">
-        {navItems.map(({ href, label, icon: Icon }) => {
+        {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
           const active =
             pathname === href || pathname.startsWith(`${href}/`);
           return (
