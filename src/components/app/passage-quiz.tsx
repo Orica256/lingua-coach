@@ -9,6 +9,55 @@ import { cn } from "@/lib/utils";
 
 const OPTION_LABELS = ["A", "B", "C", "D"] as const;
 
+/**
+ * 長文 passage を読みやすく表示する。
+ * 空行（\n\n）で段落に分割し、段落間に余白を入れる。
+ * 段落内の単一改行（手紙の宛名・署名など）は維持する。
+ * 1ブロックで返ってきた本文も、文末（. ! ?）の直後で緩く段落化して可読性を上げる。
+ */
+function Passage({ text }: { text: string }) {
+  const normalized = text.replace(/\r\n/g, "\n").trim();
+
+  // まず空行で段落分割。空行が無い（1ブロック）なら、約3文ごとに段落を区切る。
+  let paragraphs = normalized
+    .split(/\n[ \t]*\n+/)
+    .map((p) => p.trim())
+    .filter(Boolean);
+
+  if (paragraphs.length === 1) {
+    paragraphs = chunkSentences(paragraphs[0]);
+  }
+
+  return (
+    <div className="flex max-w-prose flex-col gap-4 text-sm leading-7 sm:text-base sm:leading-8">
+      {paragraphs.map((p, i) => (
+        <p key={i} className="whitespace-pre-wrap">
+          {p}
+        </p>
+      ))}
+    </div>
+  );
+}
+
+/** 改行の無い1ブロック本文を、約3文ごとの段落に分けて可読性を上げる。 */
+function chunkSentences(block: string): string[] {
+  // 文末（. ! ?）+空白 で分割しつつ区切り文字を保持
+  const sentences = block.match(/[^.!?]+[.!?]+["')\]]?\s*|[^.!?]+$/g);
+  if (!sentences || sentences.length <= 3) return [block];
+
+  const out: string[] = [];
+  const PER = 3;
+  for (let i = 0; i < sentences.length; i += PER) {
+    out.push(
+      sentences
+        .slice(i, i + PER)
+        .join("")
+        .trim()
+    );
+  }
+  return out.filter(Boolean);
+}
+
 export interface GenQuestion {
   prompt: string;
   options: string[];
@@ -102,9 +151,7 @@ export function PassageQuiz({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="whitespace-pre-wrap text-sm leading-relaxed sm:text-base">
-            {set.passage}
-          </p>
+          <Passage text={set.passage} />
         </CardContent>
       </Card>
 
