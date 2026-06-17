@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { TOEIC_PART5_SEED } from "@/data/toeic-part5-seed";
 import { touchStreak } from "@/lib/streak";
+import { evaluateBadges } from "@/lib/badges";
 
 /** id → 正解インデックスの早見表（サーバー側採点用） */
 const ANSWER_BY_ID = new Map(
@@ -74,9 +75,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: insertError.message }, { status: 500 });
   }
 
-  // ストリーク更新（非致命的）
+  // ストリーク更新＋バッジ判定（非致命的）
   await touchStreak(user.id).catch((e) =>
     console.error("touchStreak failed:", e)
+  );
+  await evaluateBadges(user.id).catch((e) =>
+    console.error("evaluateBadges failed:", e)
   );
 
   return NextResponse.json({ total, correct });

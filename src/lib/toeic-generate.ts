@@ -1,4 +1,6 @@
-import { GoogleGenAI, Type } from "@google/genai";
+import { Type } from "@google/genai";
+
+import { generateContentWithRetry } from "@/lib/gemini-client";
 
 const MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
 
@@ -21,12 +23,6 @@ export interface GenResponse {
   set: GeneratedPartSet;
   usage: { input_tokens: number; output_tokens: number };
   model: string;
-}
-
-function client() {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) throw new Error("GEMINI_API_KEY is not configured");
-  return new GoogleGenAI({ apiKey });
 }
 
 function normalizeQuestions(
@@ -60,8 +56,7 @@ async function generate(
   part: 6 | 7,
   promptOf: (o: Record<string, unknown>, i: number) => string
 ): Promise<GenResponse> {
-  const ai = client();
-  const response = await ai.models.generateContent({
+  const response = await generateContentWithRetry({
     model: MODEL,
     contents: userPrompt,
     config: {

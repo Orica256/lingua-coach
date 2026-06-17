@@ -215,6 +215,42 @@ export async function getCorrectionMistakeStats(
     .sort((a, b) => b.count - a.count);
 }
 
+export interface ReadingEstimate {
+  accuracy: number; // 正答率(%)
+  score: number; // リーディング目安スコア（5〜495・公式ではない）
+  totalQuestions: number;
+}
+
+/**
+ * TOEIC リーディング（Part 5/6/7）の演習正答率から目安スコア（5〜495）を推定する。
+ * ※あくまで練習の正答率に基づく目安。公式スコアではなく、リスニングは含まない。
+ * データが無ければ null。
+ */
+export async function getToeicReadingEstimate(
+  supabase: SupabaseServerClient,
+  userId: string
+): Promise<ReadingEstimate | null> {
+  const { data } = await supabase
+    .from("toeic_attempts")
+    .select("total, correct")
+    .eq("user_id", userId);
+
+  if (!data || data.length === 0) return null;
+  let total = 0;
+  let correct = 0;
+  for (const r of data) {
+    total += r.total ?? 0;
+    correct += r.correct ?? 0;
+  }
+  if (total === 0) return null;
+
+  const accuracy = Math.round((correct / total) * 100);
+  // 5〜495 へ線形変換し、TOEIC のスコア刻み（5点単位）に丸める
+  const raw = 5 + (correct / total) * 490;
+  const score = Math.max(5, Math.min(495, Math.round(raw / 5) * 5));
+  return { accuracy, score, totalQuestions: total };
+}
+
 /**
  * 直近の英会話添削から、実際の誤り例（誤→正）を最大 limit 件取り出す。
  * 復習問題の生成プロンプトに「学習者の実際の落とし穴」として渡す用途。

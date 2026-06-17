@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { correctText, isCorrectionConfigured } from "@/lib/correction";
 import { touchStreak } from "@/lib/streak";
+import { evaluateBadges } from "@/lib/badges";
 
 /** 1ユーザーあたりの1日のリクエスト上限（API濫用・コスト暴走の防止）。 */
 const DAILY_LIMIT = 200;
@@ -142,9 +143,12 @@ export async function POST(request: Request) {
     console.error("DB 保存中に例外:", e);
   }
 
-  // ストリーク更新（非致命的）
+  // ストリーク更新＋バッジ判定（非致命的）
   await touchStreak(user.id).catch((e) =>
     console.error("touchStreak failed:", e)
+  );
+  await evaluateBadges(user.id).catch((e) =>
+    console.error("evaluateBadges failed:", e)
   );
 
   return NextResponse.json(result);

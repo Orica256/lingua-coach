@@ -1,5 +1,6 @@
-import { GoogleGenAI, Type } from "@google/genai";
+import { Type } from "@google/genai";
 
+import { generateContentWithRetry } from "@/lib/gemini-client";
 import {
   CORRECTION_SYSTEM_PROMPT,
   buildUserContent,
@@ -49,14 +50,7 @@ export async function correctWithGemini(
   text: string,
   scene?: string
 ): Promise<CorrectionResponse> {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    throw new Error("GEMINI_API_KEY is not configured");
-  }
-
-  const ai = new GoogleGenAI({ apiKey });
-
-  const response = await ai.models.generateContent({
+  const response = await generateContentWithRetry({
     model: MODEL,
     contents: buildUserContent(text, scene),
     config: {

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";
 import { touchStreak } from "@/lib/streak";
+import { evaluateBadges } from "@/lib/badges";
 
 /**
  * 生成系（Part 6/7）の演習結果を記録する。
@@ -51,6 +52,9 @@ export async function POST(request: Request) {
 
   await touchStreak(user.id).catch((e) =>
     console.error("touchStreak failed:", e)
+  );
+  await evaluateBadges(user.id).catch((e) =>
+    console.error("evaluateBadges failed:", e)
   );
 
   return NextResponse.json({ ok: true });

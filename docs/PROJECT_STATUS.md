@@ -215,6 +215,12 @@
   - **共通化**: クイズ表示を [src/components/app/passage-quiz.tsx](../src/components/app/passage-quiz.tsx) に切り出し、生成フロー（`canSave` で保存ボタン表示）と保存再演習で共有。`generated-part.tsx` はこれを利用する形にリファクタ。
   - 導線: TOEIC ハブと Part 6/7 の intro に「保存した問題から選ぶ」を追加。
   - 効果: 保存問題は **API を呼ばず即時・無料**で解ける → Gemini 生成回数（コスト・無料枠消費）を実利用で削減。型・lint パス。
+- ✅ **TOEIC リーディング目安スコア（2026-06-13）**: `toeic_attempts`（Part 5/6/7）の累計正答率から **5〜495 の目安スコア**を算出（[src/lib/activity.ts](../src/lib/activity.ts) の `getToeicReadingEstimate`：正答率を線形変換し5点刻みに丸め）。[/history](../src/app/(app)/history/page.tsx) の上部にカード表示。**公式スコアではなくリスニング非含と明示**（このアプリにリスニングは無いため総合990ではなくリーディング目安）。
+- ✅ **バッジ獲得システム（2026-06-13）= ゲーミフィケーション**: [badges](../src/app/(app)/badges/page.tsx) ページ（nav の404を解消）。
+  - **DB**: `badges` テーブル（マイグレーション [0007](../supabase/migrations/0007_badges.sql)・unique(user_id,badge_key)・RLS 本人 select・service_role に GRANT）。**※Supabase で要実行（未実行）**。
+  - **定義＆判定** [src/lib/badges.ts](../src/lib/badges.ts)：`BADGE_DEFS`（10種＝レベル判定/初添削/添削10・50/初TOEIC/TOEIC10/Part5満点/連続3・7・30日）、`evaluateBadges(userId)`（統計を集計→未獲得で条件達成のものを service_role で付与・冪等→獲得 map を返す）。
+  - **付与タイミング**: 学習アクション後（`/api/correct`・`/api/toeic/submit`・`/api/toeic/record` で `touchStreak` の直後に `evaluateBadges`・非致命的）＋ `/badges` 表示時（その場でも付与＆表示）。
+  - UI: 獲得＝金色＋獲得日、未獲得＝淡色＋条件。型・lint パス。
 - ✅ **ストリーク（連続学習日数）実データ化（2026-06-13）**: 従来は topbar が常に「0日連続」だった。[src/lib/streak.ts](../src/lib/streak.ts) を追加し、`touchStreak`（学習時に streak_days/last_active_at を更新。同日二重カウント無し・前日学習なら+1・間が空けば1にリセット・**JST基準の日付判定**でサーバーTZ非依存）を `/api/correct`・`/api/toeic/submit` 成功時に呼ぶ。表示は `currentStreak`（最終学習が今日/昨日でなければ「途切れ」として0表示）を topbar・ダッシュボードで使用。profiles 書き込みは service_role（0005 で GRANT 済み）。
 - ✅ **設定ページ `/settings` 実装（2026-06-13）**: nav にあって404だったページを実装。[/settings](../src/app/(app)/settings/page.tsx) ＋ クライアントフォーム [src/components/app/settings-form.tsx](../src/components/app/settings-form.tsx)。① 表示名の編集・保存（ブラウザの supabase クライアントで profiles を RLS 経由 update）② 英語レベル表示＋「再判定する」→ `/onboarding` ③ ログアウト。メールは読み取り表示。
 - ✅ **レスポンシブデザイン化 実装完了**（型チェック・lint パス済み・2026-06-13）:

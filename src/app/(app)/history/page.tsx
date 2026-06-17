@@ -15,6 +15,7 @@ import {
   getRecentActivity,
   getToeicCategoryStats,
   getCorrectionMistakeStats,
+  getToeicReadingEstimate,
   formatActivityDate,
   type ActivityType,
 } from "@/lib/activity";
@@ -37,11 +38,13 @@ export default async function HistoryPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const [activity, categoryStats, mistakeStats] = await Promise.all([
-    getRecentActivity(supabase, user!.id, 30),
-    getToeicCategoryStats(supabase, user!.id),
-    getCorrectionMistakeStats(supabase, user!.id),
-  ]);
+  const [activity, categoryStats, mistakeStats, readingEstimate] =
+    await Promise.all([
+      getRecentActivity(supabase, user!.id, 30),
+      getToeicCategoryStats(supabase, user!.id),
+      getCorrectionMistakeStats(supabase, user!.id),
+      getToeicReadingEstimate(supabase, user!.id),
+    ]);
 
   const mistakeMax = mistakeStats.length > 0 ? mistakeStats[0].count : 1;
 
@@ -62,6 +65,34 @@ export default async function HistoryPage() {
           <ArrowRight />
         </Link>
       </div>
+
+      {/* TOEIC リーディング目安スコア */}
+      {readingEstimate && (
+        <Card className="border-0 bg-gradient-to-r from-sky-500/15 via-indigo-500/10 to-transparent ring-1 ring-foreground/10">
+          <CardContent className="flex flex-col items-start justify-between gap-4 py-5 sm:flex-row sm:items-center">
+            <div>
+              <p className="text-sm text-muted-foreground">
+                TOEIC リーディング目安スコア
+              </p>
+              <p className="mt-1">
+                <span className="font-mono text-4xl font-bold tracking-tight">
+                  {readingEstimate.score}
+                </span>
+                <span className="ml-1 text-lg text-muted-foreground">
+                  / 495
+                </span>
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                正答率 {readingEstimate.accuracy}% ・ 累計{" "}
+                {readingEstimate.totalQuestions} 問
+              </p>
+            </div>
+            <p className="max-w-xs text-xs leading-relaxed text-muted-foreground">
+              ※ 練習の正答率から算出した目安です。公式スコアではなく、リスニング（Part 1〜4）は含みません。演習を重ねるほど精度が上がります。
+            </p>
+          </CardContent>
+        </Card>
+      )}
 
       {/* TOEIC 傾向分析 */}
       <Card>

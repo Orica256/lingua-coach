@@ -555,7 +555,31 @@ PROJECT_STATUS / CHAT_HISTORY を読んで文脈を把握し、Phase 3 を実装
 - 保存問題は API を呼ばず即時・無料で解ける → Gemini 生成回数（コスト・無料枠 RPM/RPD・1日200回）を実利用で削減。
 
 ### ユーザー側の残作業
-- Supabase SQL Editor で `0006_toeic_generated.sql` を実行（保存機能を使うため）。
+- Supabase SQL Editor で `0006_toeic_generated.sql` を実行（保存機能を使うため）。→ 実行済み確認（service_role REST 200）。
 
 ### 次の予定（候補）
 - TOEIC スコア推定、バッジ、音声読み上げ、Vercel 本番設定。
+
+---
+
+## 26. TOEIC リーディング目安スコア ＋ バッジ獲得システム（2026-06-13）
+
+ユーザー「スコア推定」「バッジ獲得システム」の2件を実装。
+
+### TOEIC リーディング目安スコア
+- このアプリにリスニングは無いため、**総合990ではなくリーディング目安（5〜495）**として実装。
+- `src/lib/activity.ts` の `getToeicReadingEstimate`: `toeic_attempts`（Part 5/6/7）の累計正答率を線形変換し5点刻みに丸め。
+- `/history` 上部にカード表示。「公式スコアではない・リスニング非含」を明記。
+
+### バッジ獲得システム（ゲーミフィケーション）
+- `badges` テーブル（マイグレーション 0007・unique(user_id,badge_key)・RLS 本人 select・service_role GRANT）。※Supabase で要実行。
+- `src/lib/badges.ts`: BADGE_DEFS 10種（レベル判定 / 初添削 / 添削10・50 / 初TOEIC / TOEIC10 / Part5満点 / 連続3・7・30日）＋ `evaluateBadges(userId)`（統計集計→未獲得かつ条件達成を service_role で付与・冪等→獲得 map 返却）。
+- 付与タイミング: 学習アクション後（/api/correct・/api/toeic/submit・/api/toeic/record の touchStreak 直後・非致命的）＋ /badges 表示時。streak バッジを活動時に取りこぼさない狙い。
+- `/badges` ページ（nav の404解消）: 獲得＝金色＋獲得日、未獲得＝淡色＋条件。
+- 型・lint パス。
+
+### ユーザー側の残作業
+- Supabase SQL Editor で `0007_badges.sql` を実行（バッジ機能を使うため）。
+
+### 次の予定（候補）
+- 音声読み上げ（Web Speech API）、Vercel 本番設定。

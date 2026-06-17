@@ -1,4 +1,6 @@
-import { GoogleGenAI, Type } from "@google/genai";
+import { Type } from "@google/genai";
+
+import { generateContentWithRetry } from "@/lib/gemini-client";
 
 const MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
 
@@ -85,13 +87,6 @@ export async function generateReviewQuestions(opts: {
   mistakeExamples: { original: string; corrected: string }[];
   count: number;
 }): Promise<ReviewGenResponse> {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    throw new Error("GEMINI_API_KEY is not configured");
-  }
-
-  const ai = new GoogleGenAI({ apiKey });
-
   const cats =
     opts.weakCategories.length > 0
       ? opts.weakCategories.join("、")
@@ -110,7 +105,7 @@ export async function generateReviewQuestions(opts: {
 学習者の実際の誤り例:
 ${examples}`;
 
-  const response = await ai.models.generateContent({
+  const response = await generateContentWithRetry({
     model: MODEL,
     contents: userPrompt,
     config: {
