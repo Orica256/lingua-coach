@@ -117,6 +117,12 @@
 - CSP / セキュリティヘッダー
 - Anthropicコンソール月次予算アラート（$20）
 
+### セキュリティ確認・強化（2026-06-18・Web公開前）
+- **SQLインジェクション**: 生SQL/文字列連結クエリは皆無。全DBアクセスが Supabase クライアント（パラメータ化）経由のため構造的に安全。`dangerouslySetInnerHTML`/`eval` も不使用（React 自動エスケープ）。
+- **CSP 強化**（[next.config.mjs](../next.config.mjs)）: `base-uri 'self'` / `form-action 'self'` / `object-src 'none'` / `upgrade-insecure-requests` を追加。**本番では `script-src` の `'unsafe-eval'` を除去**（開発時のみ許可＝Fast Refresh 用）。`connect-src` に Gemini ドメインを明記。本番ビルド（`npm run build`）通過を確認。
+- 既存の安全策（全テーブル RLS・認証ミドルウェアで保護ルート遮断・service_role/GEMINI キーはサーバー限定・入力バリデーション・1日200回レート制限・`<user_text>` デリミタのプロンプトインジェクション対策）も確認済み。
+- 既知の許容リスク（低）: `/api/toeic/record` は生成系の再採点不可のためクライアント集計の total/correct を信頼（RLS で本人のみ・自分の進捗を盛れるだけ）。`script-src 'unsafe-inline'` は Next.js のハイドレーション都合で残置（nonce 化は将来課題）。
+
 ---
 
 ## 📁 リポジトリ構成（現状）

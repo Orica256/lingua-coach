@@ -82,7 +82,7 @@ export function SettingsForm({
               id="display_name"
               value={name}
               maxLength={50}
-              placeholder="例: Haruhito"
+              placeholder="例: Taro"
               onChange={(e) => setName(e.target.value)}
             />
           </div>
