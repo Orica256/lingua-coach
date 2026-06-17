@@ -6,11 +6,12 @@ import {
   ArrowLeft,
   ArrowRight,
   Check,
+  Home,
   RotateCcw,
   X,
 } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -282,10 +283,22 @@ function ResultView({
           <p className="mx-auto max-w-sm text-center text-sm text-muted-foreground">
             {accuracyToComment(accuracy)}
           </p>
-          <Button onClick={onRestart} size="lg" className="w-full">
-            <RotateCcw />
-            もう一度演習する
-          </Button>
+          <div className="flex w-full flex-col gap-2 sm:flex-row">
+            <Button onClick={onRestart} size="lg" className="flex-1">
+              <RotateCcw />
+              もう一度演習する
+            </Button>
+            <Link
+              href="/dashboard"
+              className={cn(
+                buttonVariants({ variant: "outline", size: "lg" }),
+                "flex-1"
+              )}
+            >
+              <Home className="size-4" />
+              ホームへ戻る
+            </Link>
+          </div>
         </CardContent>
       </Card>
 

@@ -2,9 +2,17 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, Check, RotateCcw, Sparkles, X } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Check,
+  Home,
+  RotateCcw,
+  Sparkles,
+  X,
+} from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -143,12 +151,23 @@ export default function ReviewPage() {
               <Link
                 href="/history"
                 className={cn(
-                  "inline-flex h-9 flex-1 items-center justify-center gap-1.5 rounded-lg border border-border bg-background px-4 text-sm font-medium hover:bg-muted"
+                  buttonVariants({ variant: "outline", size: "lg" }),
+                  "flex-1"
                 )}
               >
                 傾向を見る
               </Link>
             </div>
+            <Link
+              href="/dashboard"
+              className={cn(
+                buttonVariants({ variant: "ghost", size: "lg" }),
+                "w-full"
+              )}
+            >
+              <Home className="size-4" />
+              ホームへ戻る
+            </Link>
           </CardContent>
         </Card>
       </div>

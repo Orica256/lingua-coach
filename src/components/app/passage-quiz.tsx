@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { BookmarkPlus, Check, X } from "lucide-react";
+import Link from "next/link";
+import { BookmarkPlus, Check, Home, X } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
@@ -258,6 +259,17 @@ export function PassageQuiz({
             )}
 
             {footer}
+
+            <Link
+              href="/dashboard"
+              className={cn(
+                buttonVariants({ variant: "ghost", size: "lg" }),
+                "w-full"
+              )}
+            >
+              <Home className="size-4" />
+              ホームへ戻る
+            </Link>
           </CardContent>
         </Card>
       )}
