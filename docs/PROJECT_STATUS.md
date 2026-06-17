@@ -259,7 +259,13 @@
 - Anthropic アカウント・APIキー発行（Phase 3 で使用）、予算上限$20設定
 - Vercel アカウント・GitHubリポジトリ連携（自動デプロイ・公開URL）
 
-### 🔧 進行中: Vercel デプロイ（中断中・ユーザー作業）
+### ✅ 完了: Vercel 本番デプロイ（2026-06-18）
+- **本番URL: https://lingua-coach-omega.vercel.app/**（main への push で自動デプロイ・2〜3分で反映）。
+- 環境変数を Vercel に登録済み、Supabase の URL Configuration に本番URL登録済み、本番で表示・応答（主要ページ 200）確認済み。
+- **Vercel は Hobby 無料・停止不要（放置で課金なし）**。Speed Insights は未組込（ダッシュボードの Disable のみで停止可）。
+- 以下は旧メモ（初回デプロイ手順）。再デプロイや別環境用に残置。
+
+### 🔧 旧: Vercel デプロイ初回手順（参考・完了済み）
 スマホ確認のため Vercel へデプロイ中。ユーザーがブラウザで以下を実施する想定:
 1. Vercel に GitHub 連携でサインアップ（Hobby 無料）
 2. `lingua-coach` リポジトリを Import（Framework: Next.js 自動検出）

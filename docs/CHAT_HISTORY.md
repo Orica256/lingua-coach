@@ -579,7 +579,34 @@ PROJECT_STATUS / CHAT_HISTORY を読んで文脈を把握し、Phase 3 を実装
 - 型・lint パス。
 
 ### ユーザー側の残作業
-- Supabase SQL Editor で `0007_badges.sql` を実行（バッジ機能を使うため）。
+- Supabase SQL Editor で `0007_badges.sql` を実行（バッジ機能を使うため）。→ 実行済み確認（service_role REST 200）。
 
 ### 次の予定（候補）
 - 音声読み上げ（Web Speech API）、Vercel 本番設定。
+
+---
+
+## 27. Vercel 本番デプロイ ＋ セキュリティ強化 ＋ git メール変更（2026-06-18）
+
+### Vercel 本番デプロイ（公開完了）
+- **本番URL: https://lingua-coach-omega.vercel.app/**（GitHub 連携・自動デプロイ。main に push すると2〜3分で本番反映）。
+- 主要ページの応答確認（/・/login・/signup・/dashboard すべて 200）。ユーザーが本番で表示も確認済み。
+- 環境変数（Supabase 3種・GEMINI_API_KEY/MODEL・LLM_PROVIDER・NEXT_PUBLIC_APP_URL）は Vercel に登録済み。
+- Supabase Authentication → URL Configuration に本番URL登録（Site URL＋Redirect URLs に `https://lingua-coach-omega.vercel.app/**` と `http://localhost:3000/**`）を案内。ユーザー実施で本番ログイン可。
+- **Vercel は Hobby（無料）。停止不要・放置で課金なし**。Speed Insights は有効化したが `@vercel/speed-insights` 未組込のため実データ収集はされておらず、ダッシュボードの Disable だけで完全停止可（コード変更不要）。
+
+### セキュリティ確認・強化（Web公開前）
+- **SQLインジェクション安全**: 生SQL/文字列連結クエリ皆無。全 DB アクセスが Supabase クライアント（パラメータ化）。`dangerouslySetInnerHTML`/`eval` も不使用（React 自動エスケープ）。
+- **CSP 強化**（next.config.mjs）: `base-uri 'self'`/`form-action 'self'`/`object-src 'none'`/`upgrade-insecure-requests` 追加。**本番では script-src の `'unsafe-eval'` 除去**（開発時のみ許可）。connect-src に Gemini ドメイン明記。`npm run build` 通過＋本番表示確認。
+- 既存策（全テーブル RLS・認証ミドルウェア・キーのサーバー限定・入力検証・1日200回レート制限・<user_text> デリミタ）も確認。
+- 許容リスク（低）: `/api/toeic/record` はクライアント集計を信頼（自分の進捗を盛れるのみ・RLS で本人限定）。`script-src 'unsafe-inline'` は Next.js 都合で残置（nonce 化は将来課題）。
+
+### git メール変更
+- コミットの author メールを `hatopal1001@gmail.com` → **`haruto.tezuka1001@gmail.com`** に変更（こちらが GitHub アカウントに紐づいているため貢献にカウントされる）。**ローカル＋グローバル両方**設定済み。name は Orica256 のまま。
+
+### 軽微変更
+- 演習結果画面（Part 5/復習/Part 6・7・保存）に「ホームへ戻る」(/dashboard) を追加。
+- 設定の表示名プレースホルダーを `例: Haruhito` → `例: Taro` に変更。
+
+### 次の予定（候補）
+- 音声読み上げ（Web Speech API）、TOEIC 保存一覧の Part 6/7 グループ分け（保留中）、Speed Insights の扱い。
