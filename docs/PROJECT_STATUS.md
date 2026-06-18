@@ -35,7 +35,7 @@
 
 ---
 
-最終更新: 2026-06-13（**Phase 4 完了（復習モード /learn/review まで実装・検証）** / 英会話添削を Gemini（無料枠・gemini-2.5-flash）に移行・稼働＋辛口採点 / service_role 403 を 0005 で修正 / レスポンシブ化完了 / Phase 5 TOEIC Part 5 動作確認済み・40問 / 新規PC向け setup.ps1 / Vercel デプロイ進行中）
+最終更新: 2026-06-18（**単語帳（Anki 風スペース反復）実装＋バッジ19種に拡張**／`0008_vocab_cards.sql` は Supabase で実行済み ／ Phase 4 完了（復習モード /learn/review まで実装・検証）** / 英会話添削を Gemini（無料枠・gemini-2.5-flash）に移行・稼働＋辛口採点 / service_role 403 を 0005 で修正 / レスポンシブ化完了 / Phase 5 TOEIC Part 5 動作確認済み・40問 / 新規PC向け setup.ps1 / Vercel デプロイ進行中）
 
 ---
 
@@ -215,7 +215,7 @@
   - 実地検証: Part6=138語/4問・Part7=175語/3問、全問 options4・answer 妥当を確認。型・lint パス。
   - ※生成系の演習結果は `toeic_attempts`（part=6/7・answers=null）に保存。`getToeicCategoryStats` は Part 5 seed id 照合のため part6/7 行は無視され傾向分析を汚さない。7日グラフ・ストリークには反映される。
 - ✅ **Part 6/7 の問題保存・再利用（個人バンク）実装（2026-06-13）**: 生成コスト削減のため、気に入った問題を保存して再演習できる。
-  - **DB**: `toeic_generated` テーブル（マイグレーション [0006](../supabase/migrations/0006_toeic_generated.sql)・part/title/passage/questions(jsonb)・RLS で本人のみ select/insert/delete・authenticated と service_role に GRANT）。**※Supabase で要実行（未実行）**。
+  - **DB**: `toeic_generated` テーブル（マイグレーション [0006](../supabase/migrations/0006_toeic_generated.sql)・part/title/passage/questions(jsonb)・RLS で本人のみ select/insert/delete・authenticated と service_role に GRANT）。**※Supabase で実行済み（問題なし）**。
   - **保存**: 採点後に「この問題を保存」ボタン → API [/api/toeic/save](../src/app/api/toeic/save/route.ts) で本人の `toeic_generated` へ insert。
   - **再利用**: 保存一覧 [/learn/toeic/saved](../src/app/(app)/learn/toeic/saved/page.tsx)（タイトル・問題数・日付）→ 個別 [/learn/toeic/saved/[id]](../src/app/(app)/learn/toeic/saved/[id]/page.tsx) で**生成せず無料で再演習**（削除ボタン付き [delete-saved-button.tsx](../src/components/app/delete-saved-button.tsx)）。
   - **共通化**: クイズ表示を [src/components/app/passage-quiz.tsx](../src/components/app/passage-quiz.tsx) に切り出し、生成フロー（`canSave` で保存ボタン表示）と保存再演習で共有。`generated-part.tsx` はこれを利用する形にリファクタ。
@@ -223,7 +223,7 @@
   - 効果: 保存問題は **API を呼ばず即時・無料**で解ける → Gemini 生成回数（コスト・無料枠消費）を実利用で削減。型・lint パス。
 - ✅ **TOEIC リーディング目安スコア（2026-06-13）**: `toeic_attempts`（Part 5/6/7）の累計正答率から **5〜495 の目安スコア**を算出（[src/lib/activity.ts](../src/lib/activity.ts) の `getToeicReadingEstimate`：正答率を線形変換し5点刻みに丸め）。[/history](../src/app/(app)/history/page.tsx) の上部にカード表示。**公式スコアではなくリスニング非含と明示**（このアプリにリスニングは無いため総合990ではなくリーディング目安）。
 - ✅ **バッジ獲得システム（2026-06-13）= ゲーミフィケーション**: [badges](../src/app/(app)/badges/page.tsx) ページ（nav の404を解消）。
-  - **DB**: `badges` テーブル（マイグレーション [0007](../supabase/migrations/0007_badges.sql)・unique(user_id,badge_key)・RLS 本人 select・service_role に GRANT）。**※Supabase で要実行（未実行）**。
+  - **DB**: `badges` テーブル（マイグレーション [0007](../supabase/migrations/0007_badges.sql)・unique(user_id,badge_key)・RLS 本人 select・service_role に GRANT）。**※Supabase で実行済み（問題なし）**。
   - **定義＆判定** [src/lib/badges.ts](../src/lib/badges.ts)：`BADGE_DEFS`（10種＝レベル判定/初添削/添削10・50/初TOEIC/TOEIC10/Part5満点/連続3・7・30日）、`evaluateBadges(userId)`（統計を集計→未獲得で条件達成のものを service_role で付与・冪等→獲得 map を返す）。
   - **付与タイミング**: 学習アクション後（`/api/correct`・`/api/toeic/submit`・`/api/toeic/record` で `touchStreak` の直後に `evaluateBadges`・非致命的）＋ `/badges` 表示時（その場でも付与＆表示）。
   - UI: 獲得＝金色＋獲得日、未獲得＝淡色＋条件。型・lint パス。
@@ -246,6 +246,14 @@
   - ✅ **動作確認済み（2026-06-13・無料で稼働）**: `/learn/typing` で実際に Gemini 添削が返り（自然さスコア・総評・修正文）、`corrections`／`usage_log` への保存も確認。
   - 🎯 **採点の辛口化（2026-06-13）**: 初期は採点が甘く、誤りだらけの英文に 90点が出ていた。共通プロンプト [src/lib/correction.ts](../src/lib/correction.ts) の `CORRECTION_SYSTEM_PROMPT` に **naturalness の明確な採点ルーブリック（誤りの個数→スコア帯）** を追加し、試験官スタンスで「励ましでスコアを上げない／誤りを1つ残らず指摘」と明示。実測で**同一英文が 90点→28点**に是正（実際の Gemini で検証済み）。
   - 🩹 **デバッグで判明した不具合と修正（重要）**: 最初 `/api/correct` が 500。原因は **service_role が usage_log/corrections に 403**（GRANT 不足）。Supabase 設定「Automatically expose new tables: OFF」のため、新規テーブルは明示 GRANT した role しかアクセスできず、既存マイグレーションは `authenticated` にしか GRANT しておらず **service_role への GRANT が抜けていた**（service_role は RLS は飛び越えるが GRANT 権限は別途必要）。→ [supabase/migrations/0005_grant_service_role.sql](../supabase/migrations/0005_grant_service_role.sql) で service_role に GRANT 付与し解消（**Supabase で実行済み**）。Gemini キー自体は正常（`AQ.Ab8...` は Google の新形式・有効）だった。
+
+- ✅ **単語帳（Anki 風スペース反復）実装（2026-06-18）= Phase 7 拡張**: 覚えたい単語・表現を登録し、忘れた頃に再出題して定着させる。
+  - **DB**: `vocab_cards` テーブル（マイグレーション [0008](../supabase/migrations/0008_vocab_cards.sql)・term/meaning/example/source/box/due_at/reps/lapses・RLS で本人のみ select・authenticated select と service_role 全権を GRANT）。**※Supabase で実行済み（問題なし）**。
+  - **SRS ロジック** [src/lib/srs.ts](../src/lib/srs.ts)：Leitner 方式（box 0〜5・間隔 [0,1,3,7,16,35]日）の純粋関数 `scheduleNext`（again=box0へ・good=+1・easy=+2）と `isDue`。テスト容易な副作用なし設計。
+  - **API**: [/api/vocab](../src/app/api/vocab/route.ts)（POST 作成＝上限2000枚・DELETE 削除、いずれも service_role＋本人 user_id 照合）、[/api/vocab/review](../src/app/api/vocab/review/route.ts)（POST 採点＝box/due_at/reps/lapses 更新→`touchStreak`＋`evaluateBadges`）。
+  - **UI**: [/vocab](../src/app/(app)/vocab/page.tsx)（サーバー：今日の復習枚数・登録フォーム・一覧・**添削からの語彙候補**＝`getRecentMistakeExamples` の corrected を chip 表示）＋クライアント [vocab-manager.tsx](../src/components/app/vocab-manager.tsx)（追加/削除・楽観的更新）。[/vocab/review](../src/app/(app)/vocab/review/page.tsx)（サーバー：due≤now のカードを最大30枚ロード）＋クライアント [vocab-review.tsx](../src/components/app/vocab-review.tsx)（表→「答えを見る」→まだ/覚えた/簡単で採点→次へ）。
+  - 導線: サイドバー/モバイルナビに「単語帳」（BookMarked）を追加。型・lint パス。
+- ✅ **バッジ種類を拡張（2026-06-18）**: [src/lib/badges.ts](../src/lib/badges.ts) の `BADGE_DEFS` を 10種→**19種**に拡張。追加 9種＝添削の鬼(100回)/ネイティブ級(自然さ90+)/TOEICやり込み(50回)/リーディング300・400(目安スコア)/単語帳デビュー/語彙コレクター(復習100回)/2週間継続/継続の達人(100日)。`BadgeStat` に `maxNaturalness`・`readingScore`・`vocabCards`・`vocabReviews` を追加し、`getBadgeStats` で集計（corrections の naturalness 最大値・toeic_attempts の累計正答率→目安スコア・vocab_cards 枚数と reps 合計）。`vocab_cards` 未作成でも data=null で安全（0扱い）。
 
 ### Supabase プロジェクト情報
 - Project URL: `https://sshauvkhsdpwkgagcvfi.supabase.co`
