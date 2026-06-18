@@ -610,3 +610,29 @@ PROJECT_STATUS / CHAT_HISTORY を読んで文脈を把握し、Phase 3 を実装
 
 ### 次の予定（候補）
 - 音声読み上げ（Web Speech API）、TOEIC 保存一覧の Part 6/7 グループ分け（保留中）、Speed Insights の扱い。
+
+---
+
+## 28. 単語帳（Anki風スペース反復）実装 ＋ バッジ19種に拡張（2026-06-18）
+
+セッション開始時に docs を読んで文脈把握。`0006`/`0007` マイグレーションが実行済みである旨を PROJECT_STATUS に反映（「要実行」→「実行済み（問題なし）」）。その後ユーザー「今実装できそうな機能は？」→ 候補提示 → **「バッジの種類を増やす」＋「単語帳（Anki風スペース反復）」** を選択して実装。
+
+### バッジ拡張（10種 → 19種）
+- `src/lib/badges.ts` の `BADGE_DEFS` に9種追加: 添削の鬼(100回) / ネイティブ級(自然さ90+) / TOEICやり込み(50回) / リーディング300・400(目安スコア) / 単語帳デビュー / 語彙コレクター(復習100回) / 2週間継続(14日) / 継続の達人(100日)。
+- `BadgeStat` に `maxNaturalness`・`readingScore`・`vocabCards`・`vocabReviews` を追加。`getBadgeStats` で集計（corrections の naturalness 最大値、toeic_attempts 累計正答率→目安スコア、vocab_cards 枚数と reps 合計）。`vocab_cards` 未作成でも data=null で 0 扱い。
+- リーディング目安は 5〜495（リーディングのみ）なので合計スコア名は誤解を招くと判断し、バッジ名を「リーディング300/400」と実値準拠にした。
+
+### 単語帳（Anki風スペース反復）
+- **DB**: `vocab_cards`（マイグレーション 0008・term/meaning/example/source/box/due_at/reps/lapses・RLS 本人 select・authenticated select と service_role 全権 GRANT）。**ユーザーが Supabase で実行済み**。
+- **SRS**: `src/lib/srs.ts`。Leitner 方式（box 0〜5・間隔 [0,1,3,7,16,35]日）の純粋関数 `scheduleNext`（again=box0 / good=+1 / easy=+2）＋ `isDue`。副作用なしでテスト容易。
+- **API**: `/api/vocab`（POST 作成＝上限2000枚・DELETE 削除、service_role＋本人 user_id 照合）、`/api/vocab/review`（POST 採点＝box/due_at/reps/lapses 更新→touchStreak＋evaluateBadges）。
+- **UI**: `/vocab`（サーバー：今日の復習枚数・登録フォーム・一覧・**添削からの語彙候補**＝getRecentMistakeExamples の corrected を chip 表示）＋ `vocab-manager.tsx`（追加/削除・楽観的更新）。`/vocab/review`（サーバー：due≤now を最大30枚ロード）＋ `vocab-review.tsx`（表→「答えを見る」→まだ/覚えた/簡単で採点→次へ）。
+- 導線: nav-items に「単語帳」（BookMarked）追加。
+
+### 実装メモ
+- `Input` コンポーネント（base-ui ラッパ）は ref を forward しないため、候補クリック時のフォーカス/スクロールは `document.getElementById("vocab-term")` 経由に変更。
+- lint で `useSuggestion`（"use" 始まりが hooks ルールに抵触）→ `applySuggestion` にリネーム。未使用 import を除去。
+- 型チェック: 新規ファイルはエラー0。`@google/genai` の型エラー4件は**この環境で当該パッケージが node_modules に未インストール**なだけの既存問題で今回の変更とは無関係。lint パス。
+
+### 次の予定（候補）
+- 音声読み上げ（Web Speech API）、バッジ獲得時のトースト演出、単語帳の TTS 読み上げ。
